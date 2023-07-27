@@ -1,0 +1,11 @@
+--track0:基準角,-1080,1080,90
+--track1:拡張角,-360,360,0
+--track2:X,-9000,9000,0
+--track3:Y,-9000,9000,0
+--check0:タイプ変更,0;
+--dialog:透明度,alpha=100;エッジ抽出/chk,edg=0;しきい値,dth=0;単色化/chk,mono=0;色/col,col=0xffffff;強さ,st=100;輝度を保持0~1,lum=1;ぼかし/chk,bl=0;範囲,range=3;縦横比,asp=0;発光/chk,fla=0;強さ,fst=100;拡散,di=50;しきい値,th=100;拡散速度,vd=10;色/col,fcol="";
+
+--関数化呼び出し
+require("fan_clipping")
+--関数実行
+fan_clipping(0,obj.track0,obj.track1,obj.track2,obj.track3,obj.check0,alpha,edg,dth,mono,col,st,lum,bl,range,asp,fla,fst,di,th,vd,fcol)

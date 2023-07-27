@@ -1,0 +1,561 @@
+@斬撃エフェクト
+--track0:基本幅,1,100,15,1
+--track1:先端幅,0,100,10,0.1
+--track2:ブラー量,1,100,25,1
+--track3:光の強さ,0,100,20,1
+--check0:ライトを適用,1
+--dialog:基本色/col,local dcol=0xffffff;光の色/col,local gcol=0xffff00;ブラーを適用/chk,local blur=1;
+obj.effect()
+obj.load("figure","四角形",dcol)
+--■変数-----------------------------------------------------
+local	ww,ww2,tt,bld,toe,frmW,frmH,toW,toH,bl,lt
+ww	=obj.screen_w/4
+ww2	=obj.screen_w/2
+tt	=obj.time/(obj.totaltime/2)
+bld	=obj.track0
+toe	=obj.track1/100
+bl	=obj.track2
+lt	=obj.track3
+--■クリッピング処理部分-------------------------------------
+if(obj.time<(obj.totaltime/2)) then
+     frmW	=ww2*tt
+     frmH	=1-((1-toe)*tt)
+     toW	=0
+     toH	=1
+else
+     frmW	=ww*2
+     frmH	=toe
+     toW	=ww2*(tt-1)
+     toH	=1-((1-toe)*(tt-1))
+end
+
+--■描画-----------------------------------------------------
+obj.setoption("drawtarget","tempbuffer",ww2,bld*2)
+
+obj.drawpoly(
+-ww+toW		,-bld*toH	,0,
+-ww+frmW	,-bld*frmH	,0,
+-ww+frmW	,bld*frmH	,0,
+-ww+toW		,bld*toH	,0
+)
+
+obj.load("tempbuffer")
+
+--■グローの追加---------------------------------------------
+if(obj.check0)then
+     obj.effect("グロー","強さ",lt,"color",gcol,"no_color",0)
+else end
+--■方向ブラーの追加する-------------------------------------
+if(blur==1)then
+     obj.effect("方向ブラー","範囲",bl,"角度",90)
+else end
+-------------------------------------
+
+@衝撃エフェクト
+--track0:ﾗｲﾝ幅[%],1,100,100,0.1
+--track1:分散範囲,0,1000,50,1
+--track2:表示時間,0,100,0.5,0.1
+--track3:表示間隔,0,100,0.5,0.1
+--check0:逆方向,0
+--dialog:基本サイズ,local size=100;形状/fig,local fig1="円";基本色/col,local col=0xffffff;縁の色/col,local col2=0xff0000;縁サイズ,local edge=3;変化周期,local chg=0;歪要素[幅],local rasW=10;歪要素[高さ],local rasH=10;ランダム振幅/chk,local rasRdm=1;ブラー量,local gra=50;
+
+--■変数---------------------------------------------------------------------------------------
+local	lsz,life,time,ii,tt,mv,a,b,c,d,x,y,sz,al
+lsz	=size/2*obj.track0/100
+rdm	=obj.track1/2
+life	=obj.track2
+gap	=obj.track3
+seed	=obj.getvalue("rz")
+
+
+
+--■関数---------------------------------------------------------------------------------------
+local function drawing(a,b,c,d,pp,pr,sz,al)
+obj.load("figure",a,b,c,d)
+  obj.effect("縁取り","サイズ",edge,"color",col2)
+  obj.effect("ラスター","横幅",rasW,"高さ",rasH,"周期",chg,"縦ラスター",0,"ランダム振幅",rasRdm)
+  obj.effect("ラスター","横幅",rasW/2,"高さ",rasH*2,"周期",chg,"縦ラスター",1,"ランダム振幅",rasRdm)
+  obj.effect("放射ブラー","範囲",gra)
+  obj.effect()
+px	=obj.rand(-pp,pp,pr+seed,1)
+py	=obj.rand(-pp,pp,pr+seed+512,1)
+obj.draw(px,py,0,sz,al)
+end
+--▼描画処理----------------------------------------------------------------------------------
+
+if(gap<=0)then-------------------------------------
+	drawing(fig1,col,size,lsz,0,0,1,1)
+
+
+else-------------------------------------
+if(life<gap)then
+mns	=0
+else
+mns	=gap*life
+end
+
+num	=math.floor((obj.totaltime-mns)/gap)
+num	=math.max(1,num)
+
+for ii=0 ,num-1 do
+	tt	=(life-obj.time+ii*gap)/life
+	tt	=math.min(1,math.max(0,tt))
+
+if(life<=0)then
+	mv	=1
+	al	=1-tt
+elseif(obj.check0)then
+	mv	=tt
+	al	=1-tt
+else
+	mv	=1-tt
+	al	=tt
+end
+
+	drawing(fig1,col,size,lsz,rdm,ii,mv,al)
+end
+end-------------------------------------
+
+@雷球
+--track0:光筋強度,0,100,15,0.1
+--track1:球体光度,0,200,110,0.1
+--track2:球サイズ,0,1000,200,0.1
+--track3:本体ﾎﾞｶｼ,0,300,50,1
+--dialog:雷光密度,local num=3;ﾗｲﾝ幅,local lineW=100;色(全体)/col,local colE=0xffff00;色(光筋)/col,local colG=0xffffff;色(周囲)/col,local colB=0xffffff;ブレ幅X,local mvx=10;ブレ幅Y,local mvy=10;光筋補正[0-100],local thr=99;光筋移動速度,local ltsp=10;ﾉｲｽﾞ速度[1-10],local noizspeed=5;ﾗﾝﾀﾞﾑに動かす/chk,local stp=1;
+
+--■変数--------------------------------------------------------------
+local 	glow,noiz,sz,gra,nzs,fx,fy,fsz,fr,rdr,rdx,rdy
+glow	=obj.track0
+noiz	=200-obj.track1
+sz	=obj.track2
+gra	=obj.track3
+nzs	=10/math.min(10,math.max(1,noizspeed))
+num	=math.max(1,num)
+--■関数--------------------------------------------------------------
+local function drawing(fx,fy,fsz,fr)
+obj.load("figure","円",colG,fsz,lineW)
+  obj.effect("ぼかし","範囲",gra)
+  obj.effect("ノイズ","強さ",noiz,
+		"速度X",ltsp,"速度Y",ltsp,"変化速度",0,
+		"周期X",1,"周期Y",1,"しきい値",thr,"type",4)
+  obj.effect("縁取り","サイズ",1,"color",colE)
+  obj.effect("グロー","強さ",glow,
+		"拡散",50,"しきい値",40,"color",colB,"no_color",0)
+  obj.effect()
+obj.draw(fx,fy,0,1,1,0,0,fr)
+end
+--▼描画処理----------------------------------------------------------
+for ii=1 ,num do
+	rdr=obj.rand(0,360,obj.frame/nzs*ii*stp,1)
+	rdx=obj.rand(-mvx,mvx,obj.frame/nzs*ii*stp,1)
+	rdy=obj.rand(-mvy,mvy,obj.frame/nzs*ii*stp,1)
+	drawing(rdx,rdy,sz,rdr)
+end
+
+@火球
+--track0:炎サイズ,1,800,150,0.1
+--track1:炎密度,0,1000,100,1
+--track2:炎濃度,0,100,70,0.1
+--track3:光の強さ,1,200,20,1
+--check0:中心円を描画,1
+--dialog:炎基本色/col,local col1=0xff8000;中心円の色/col,local col2=0xffff00;中心円輝き/col,local col3=0xffffff;炎透明度[%],local fal=60;揺れの速さ,local spd=1;揺れ要素,local rstr=50;中心円ぼかし,local gra=15;要素数,local nm=3;
+
+--■変数------------------------------------------
+local	dzm,zm,sz,thr,glo,al,ang,i
+dzm	=obj.getvalue("zoom")
+zm	=(obj.track0/100)*(dzm/100)
+sz	=obj.track1
+thr	=100-obj.track2
+glo	=obj.track3
+al	=(100-fal)/100
+ang	=360/nm
+--■中心円描画------------------------------------
+local function drcir(col2,col3,dzm,gra)
+	obj.load("figure","円",col2,dzm)
+	obj.effect("ぼかし","範囲",gra)
+	obj.effect("グロー","強さ",40,"拡散",glo/2,"しきい値",25,"color",col3,"no_color",0)
+	obj.effect()
+	obj.draw()
+end
+
+if(obj.check0)then
+	drcir(col2,col3,dzm,gra)
+end
+
+--■炎のエフェクト--------------------------------
+obj.load("figure","円",col1,sz)
+obj.effect("ノイズ","強さ",100,"速度X",spd,"速度Y",1,"変化速度",10,"周期X",3,"周期Y",2,"しきい値",thr,"type",4)
+obj.effect("ラスター","横幅",rstr,"高さ",50,"縦ラスター",1,"ランダム振幅",1)
+obj.effect("ラスター","横幅",25,"高さ",50,"縦ラスター",0,"ランダム振幅",1)
+obj.effect("グロー","強さ",40,"拡散",glo,"しきい値",25)
+obj.effect()
+
+--■描画部分--------------------------------------
+for i=0,nm-1 do
+	obj.draw(0,0,0,zm,al,0,0,ang*i)
+end
+
+
+
+@照準
+--track0:円1ﾗｲﾝ,0,100,3,0.1
+--track1:円2ｻｲｽﾞ,0,100,93,0.1
+--track2:円3ｻｲｽﾞ,0,100,50,0.1
+--track3:中心ｻｲｽﾞ,0,100,8,0.1
+--dialog:基本形状/fig,local fig1="円";中心形状/fig,local fig2="円";色[円]/col,local col1=0xffffff;色[中心]/col,local core=0xff0000;円2ライン,local lineB=1;円3ライン,local lineC=1;
+
+obj.effect()
+--■変数--------------------------------------------------------------
+s_cirA	=200
+l_cirA	=obj.track0
+s_cirB	=obj.track1/100*s_cirA
+s_cirC	=obj.track2/100*s_cirA
+s_core	=obj.track3/100*s_cirA
+l_cirB	=lineB
+l_cirC	=lineC
+
+--▼四角形を描く関数----------------------------------
+function drawsqare(ox,oy,sqw,sqh,sqal,sqsz,sqcl)
+	obj.load("figure","四角形",sqcl,sqsz)
+	sw=sqw/2
+	sh=sqh/2
+	obj.drawpoly(
+		-sw+ox,-sh+oy,0,
+		sw+ox,-sh+oy,0,
+		sw+ox,sh+oy,0,
+		-sw+ox,sh+oy,0,
+		0,0,sw,0,sw,sh,0,sh,sqal
+		)
+end
+--▲--------------------------------------------------
+
+obj.setoption("drawtarget","tempbuffer",225,225)
+
+--■円を描く---------------------------------------------------------
+obj.load("figure",fig1,col1,s_cirA,l_cirA)
+obj.draw()
+obj.load("figure",fig1,col1,s_cirB,l_cirB)
+obj.draw()
+obj.load("figure",fig1,col1,s_cirC,l_cirC)
+obj.draw()
+
+--■十次線とか目盛り線とか--------------------------------------------
+drawsqare(0,0,l_cirA,s_cirA*1.05,0.5,s_cirA*1.05,col1)
+drawsqare(0,0,s_cirA*1.05,l_cirA,0.5,s_cirA*1.05,col1)
+
+for si=1,4 do
+ drawsqare((s_cirC*0.8)/8*si,0,l_cirC*1.5,s_cirC/10,0.5,s_cirC,col1)
+ drawsqare((-s_cirC*0.8)/8*si,0,l_cirC*1.5,s_cirC/10,0.5,s_cirC,col1)
+ drawsqare(0,(s_cirC*0.8)/8*si,s_cirC/10,l_cirC*1.5,0.5,s_cirC,col1)
+ drawsqare(0,(-s_cirC*0.8)/8*si,s_cirC/10,l_cirC*1.5,0.5,s_cirC,col1)
+end
+
+--■お飾りの三角形----------------------------------------------------
+obj.load("figure","三角形",col1,s_cirA/15)
+obj.draw(-s_cirC/2-s_cirA/30,0,0,1,1,0,0,90)
+obj.draw(s_cirC/2+s_cirA/30,0,0,1,1,0,0,270)
+obj.draw(0,-s_cirC/2-s_cirA/30,0,1,1,0,0,180)
+obj.draw(0,s_cirC/2+s_cirA/30,0,1,1,0,0,0)
+
+--■中心点------------------------------------------------------------
+obj.load("figure",fig2,core,s_core)
+obj.draw(0,0,0,1,0.7)
+
+----------------------------------------------------------------------
+
+obj.load("tempbuffer")
+
+
+@ビーム
+--track0:基本ｻｲｽﾞ,0,500,25,1
+--track1:広がり,0,1000,50,0.1
+--track2:長さ,0,1000,500,1
+--track3:伸び速度,0,60,1,0.1
+--check0:流れを逆にする,0
+--dialog:ライト/chk,local l_fl=1;図形の色/col,local col1=0xffffff;縁の色/col,local col2=0xffff00;ライト色/col,local col3=0xffff00;ライト強さ,local lstr=25;縁サイズ,local edge=10;ぼかし,local gra=20;ﾉｲｽﾞ強さ,local nstr=10;ﾉｲｽﾞ速度X,local nspX=-100;ﾉｲｽﾞ速度Y,local nspY=0;ﾉｲｽﾞ周期X,local nrX=0.01;ﾉｲｽﾞ周期Y,local nrY=20;ﾉｲｽﾞ変化速度,local chg=0;ﾉｲｽﾞしきい値,local thr=0;
+
+local	dsize,brd,len,spd,sz,spd,nX,sw,sh1,sh2
+local	sqw,sqh1,sqh2,sqal,sqsz,sqcl
+dsize	=obj.track0	--default size	:基本サイズ
+brd	=obj.track1	--broad		:広がり
+len	=obj.track2	--length	:長さ
+spd	=obj.track3	--speed		:伸び速度
+sz	=math.max(math.abs(brd),math.abs(dsize))
+
+--●速度ゼロの時に動かないオブジェクト化する---------------
+if(spd==0)then spd=1 else spd=obj.time/spd end
+--●流れを逆にする処理-------------------------------------
+if(obj.check0)then nX=-nspX else nX=nspX end
+--●関数---------------------------------------------------
+local function drawsqare(sqw,sqh1,sqh2,sqal,sqsz,sqcl)
+	obj.load("figure","四角形",sqcl,sqsz)
+	sw	=sqw/2
+	sh1	=sqh1/2
+	sh2	=sqh2/2
+	obj.drawpoly(
+	(-sw-sw)*spd	,-sh2-sh1*spd	,0,
+	sw-sw		,-sh2		,0,
+	sw-sw		,sh2		,0,
+	(-sw-sw)*spd	,sh2+sh1*spd	,0,
+	0		,0,
+	sqw		,sh1-sh2,
+	sqw		,sh1+sh2,
+	0		,sqh1,		sqal)
+end
+--●描画---------------------------------------------------
+obj.effect()
+obj.setoption("drawtarget","tempbuffer",len*2,sz*2)
+drawsqare(len,brd,dsize,1,sz,col1)
+obj.load("tempbuffer",0,0,len,sz*2)
+
+--●フィルタ追加-------------------------------------------
+obj.effect("縁取り","サイズ",edge,"ぼかし",0,"color",col2)
+obj.effect("ぼかし","範囲",gra)
+if(l_fl==1)then
+	obj.effect("ライト","強さ",lstr,"color",col3)
+end
+obj.effect("ノイズ","強さ",nstr,"速度X",-nX,
+	"速度Y",nspY,"変化速度",chg,"周期X",nrX,
+	"周期Y",nrY,"しきい値",thr,"type",3)
+
+
+@小爆発
+--track0:ｺｱｻｲｽﾞ,0,1000,100,1
+--track1:周円数,0,10,0,1
+--track2:周円太さ,1,100,10,1
+--track3:拡散速度,1,10,2,0.1
+--dialog:中心の色/col,local col1=0xffff00;外側の色/col,local col2=0xff0000;周円の色/col,local col3=0xffffff;ノイズ強さ,local noise=50;ぼかし,local grade=3;
+
+local t,cir,num,c_line,size,core,qurt,alpha,limit,buffer_w
+t	=obj.time/obj.totaltime
+cir	=obj.track0
+num	=obj.track1
+c_line	=obj.track2
+size	=obj.track3
+core	=obj.track0/2*t
+qurt	=core/4
+alpha	=1-t^3
+limit	=cir*obj.totaltime*size+((num*2)^2)
+
+if(limit<cir*2)then	--枠が小さくなりすぎるので急遽入れたw
+	buffer_w=cir*2
+else
+	buffer_w=limit
+end
+
+obj.setoption("drawtarget","tempbuffer",buffer_w,cir*size+num)
+--■周円の描画---------------------------------------------------------------
+for i = 0 ,num do
+obj.load("figure","円",col3,cir*(size+i)*t^2,c_line/(num-i))
+obj.draw(0,0,0,1,1,80,0,0)
+end
+--■コア上半分---------------------------------------------------------------
+obj.setoption("drawtarget","tempbuffer")
+obj.load("figure","円")
+obj.effect("グラデーション","強さ",100,"color",col1,"color2",col2,"type",1)
+obj.drawpoly(
+	-core,-qurt,0,
+	core,-qurt,0,
+	core,qurt,0,
+	-core,qurt,0
+	)
+--■コア底部-----------------------------------------------------------------
+obj.drawpoly(
+	-core,-core,0,
+	core,-core,0,
+	core,0,0,
+	-core,0,0,
+	0,0,
+	100,0,
+	100,50,
+	0,50
+)
+-----------------------------------------------------------------------------
+
+obj.load("tempbuffer")
+obj.alpha=alpha
+obj.effect("ノイズ","強さ",noise,"速度Y",cir/100)
+obj.effect("ぼかし","範囲",grade)
+
+
+@放射光
+--track0:光筋量,0,100,50,0.1
+--track1:光濃度,0,100,50,1
+--track2:範囲,0,1000,300,1
+--track3:周辺ﾎﾞｶｼ,0,200,150,1
+--check0:流れを逆にする,0
+--dialog:色1/col,local col1=0xffffff;色2/col,local col2=0xffff00;中心濃度ex,local edge=1;変化速度,local nsp=0;回転量,local nsx=0;中心幅,local cen=0;渦,local var=0
+
+local	thr,egra,msz,mgra
+thr	=100-obj.track0
+egra	=obj.track1
+msz	=obj.track2
+mgra	=obj.track3
+obj.load("figure","背景",col2)
+obj.effect("ノイズ","速度X",nsx,"速度Y",0.1,"変化速度",nsp,"周期X",0.5,"周期Y",0,"しきい値",thr,"type",3)
+obj.effect("極座標変換","中心幅",cen,"渦巻",var/10)
+obj.effect("マスク","サイズ",msz,"ぼかし",mgra,"type",1)
+obj.effect("縁取り","サイズ",edge,"ぼかし",100-egra,"color",col1)
+
+@竜巻
+--track0:頻度,0.1,1000,25,1
+--track1:高さ,1,200,50,1
+--track2:半月太さ,1,100,20,0.1
+--track3:渦広がり,-100,500,150,1
+--check0:収束させる,0
+--dialog:基本色/col,local col=0x808080;X揺れ幅,local xrd=30;Y揺れ幅,local y_rand=10;上昇速度,local vart=150;X軸傾き,local x_ang=80;
+
+--●半月の描画----------------------------------------------------
+obj.load("figure","円",col,100)
+local	mx,gap,hight,life,spr,fin,num,i,xx,yy,zm,tt,dir,al,yrd,zrd
+mx=obj.track2
+obj.effect("マスク","X",mx,"マスクの反転",1,"type",1)
+obj.effect()
+
+--●変数----------------------------------------------------------
+gap	= 1/obj.track0
+hight	= (obj.track1/100)*obj.screen_h
+life	= hight/vart
+spr	= obj.track3/100
+
+if(obj.check0)then	--収束処理
+	fin= life+gap
+else
+	fin= 0
+end
+
+num	= math.floor((obj.totaltime-fin)/gap)
+
+--●出力-----------------------------------------------------------
+for i=0,num-1 do
+	tt	=(life-obj.time+i*gap)/life
+	tt	=math.min(1,math.max(tt,0))
+  	dir	=obj.rand(-90-xrd/2,-90+xrd/2,i,0)
+
+	xx	=hight*math.cos(dir*math.pi/180)*(1-tt)
+	yy	=hight*math.sin(dir*math.pi/180)*(1-tt)
+  	zm	=1+(spr*(1-tt))
+
+	if(tt==0 or tt==1) then	--これを書いておかないと--
+		al=0		--終始点に溜まり続ける。--
+	else
+		al=1
+	end
+
+	yrd	=obj.rand(-y_rand,y_rand,obj.frame*i,1)
+	zrd	=(360*tt)+obj.rand(-360,360,obj.frame*i,1)
+
+obj.draw(xx,yy,0,zm,al,x_ang,yrd,zrd)
+end
+
+
+@スモーク
+--track0:発生頻度,1,1000,20,1
+--track1:移動速度,1,1000,20,1
+--track2:消滅速度,-1,100,-1,1
+--track3:サイズ,0,800,300,1
+--check0:基準点の表示,0
+--dialog:最終地点で収束/chk,local fin=0;始点を定める/chk,local strt=0;色/col,local col1=0xffffff;加速度,local acc=1;ぼかし,local bl=50;変化速度,local chsp=10;ノイズ強さ[0-200],local nstr=50;ノイズしきい値,local nthr=0;ﾉｲｽﾞﾀｲﾌﾟ[1-6],local ntyp=1;乱数の種,local seed=100;マスク比[0～1],local mskr=0.75;座標,smpos={-150,100,150,100,150,-100,-150,-100};マスクタイプ/fig,local mfig="円";
+
+--■各種変数----------------------------------------------------------
+local	zm,gap,spd,altm,sz,life,typ,i,num,tt,srd,erd,al1,al2,mytp
+local	sx1,sy1,sx2,sy2,ex1,ey1,ex2,ey2,sxx,syy,exx,eyy,xx,yy
+zm	=obj.getvalue("zoom")/100
+gap	=10/obj.track0
+spd	=obj.track1*10
+altm	=obj.track2
+sz	=obj.track3
+life	=obj.screen_w/spd
+
+--■マスクタイプの指定------------------------------------------------
+if(mfig=="四角形")then
+	mtyp=2
+elseif(mfig=="三角形")then
+	mtyp=3
+elseif(mfig=="五角形")then
+	mtyp=4
+elseif(mfig=="六角形")then
+	mtyp=5
+elseif(mfig=="星型")then
+	mtyp=6
+else
+	mtyp=1
+end
+--■ノイズタイプの指定------------------------------------------------
+if(1<=ntyp and ntyp<=6)then
+	typ=ntyp-1
+else
+	typ=0
+end
+--■最終地点で収束させる処理------------------------------------------
+if(fin==0)then
+	num	=(obj.totaltime+life)/gap
+else
+	num	=(obj.totaltime-life)/gap
+end
+	num	=math.max(1,num)
+--■アンカー処理-------------------------------------------------------
+obj.setanchor("smpos",4,"loop")
+	sx1	=smpos[1]*zm
+	sy1	=smpos[2]*zm
+	sx2	=smpos[3]*zm
+	sy2	=smpos[4]*zm
+	ex1	=smpos[5]*zm
+	ey1	=smpos[6]*zm
+	ex2	=smpos[7]*zm
+	ey2	=smpos[8]*zm
+--■追加フィルタ-------------------------------------------------------
+obj.load("figure","四角形",col1,sz)
+obj.effect("ノイズ","強さ",200-nstr,"変化速度",chsp,"type",typ,"しきい値",nthr)
+obj.effect("マスク","サイズ",sz*mskr,"ぼかし",bl,"type",mtyp)
+obj.effect()
+
+for i=0,num-1 do
+--▼forループ ココカラ-------------------------------------------------
+	txa	=(1-((life-obj.time+i*gap)/life))	--時間
+	if(txa<=0)then
+		tt	=txa
+	else
+		tt	=txa^acc			--加速度処理
+	end
+	srd	=obj.rand(1,100,i+seed,1)/100		--始点ランダム
+	erd	=obj.rand(1,100,i+seed+1000,1)/100	--終点ランダム
+	sxx	=sx1+(sx2-sx1)*srd			--始点X位置
+	syy	=sy1+(sy2-sy1)*srd			--始点Y位置
+	exx	=ex1+(ex2-ex1)*erd			--終点X位置
+	eyy	=ey1+(ey2-ey1)*erd			--終点Y位置
+	xx	=sxx+(exx-sxx)*tt			--ｵﾌﾞｼﾞｪｸﾄX
+	yy	=syy+(eyy-syy)*tt			--ｵﾌﾞｼﾞｪｸﾄY
+	--■消滅処理----------------------------------
+	if(altm<0)then
+		al1	=1
+	else
+		al1	=(1-altm/100)*(1-tt)
+	end
+		al1	=math.max(0,math.min(1,al1))
+	--■始点を定める処理--------------------------
+	if(strt==0)then
+		al2	=1
+	else
+		if(tt<0)then
+			al2	=0
+		else			
+			al2	=(1-altm/100)*txa
+		end
+	end
+	----------------------------------------------
+obj.draw(xx,yy,0,1,al1*al2)
+--▲forループ ココマデ-------------------------------------------------
+end
+
+--■基準点の表示-------------------------------------------------------
+if(obj.check0)then
+	obj.load("figure","円",0xff0000,15)
+	obj.draw(sx1,sy1,0)
+	obj.load("figure","円",0xff0000,15)
+	obj.draw(sx2,sy2,0)
+	obj.load("figure","三角形",0x00ffff,15)
+	obj.draw(ex1,ey1,0)
+	obj.load("figure","三角形",0x00ffff,15)
+	obj.draw(ex2,ey2,0)
+end

@@ -1,0 +1,389 @@
+@炎上エフェクト
+--track0:密度,1,100,20,1
+--track1:範囲[%],0,500,120,1
+--track2:炎縦横比,-100,100,-50,1
+--track3:基本ｻｲｽﾞ,0,1000,200,0.1
+--check0:炎成分のみ表示,0
+--dialog:前面にも表示/chk,local front=0;前面部透明度[%],local falpha=75;色/col,local col1=0xff8000;揺れ速度,local spd=10;位置補正X,local adx=0;位置補正Y,local ady=0;揺れ幅,local rw=100;ぼかし,local gra=25;変化のばらつき,local bre=20;炎の幅[個別],fwd=60;乱数の種,local sd=0;
+
+--■変数---------------------------------------------------------------------
+local	asp,rate,nm,ww,hhi,ch,xx,yy,rs,rsx,sz,dsz,disp
+sz	=obj.getvalue("zoom")/100
+asp	=obj.track2/100
+dsz	=obj.track3
+rate	=obj.track1
+nm	=obj.track0
+ww	=obj.w/2*(rate/100)
+hh	=obj.h/2*(rate/100)
+bre	=math.max(5,bre)
+falpha	=math.max(0,math.min(100,falpha))
+if(obj.check0)then
+	disp	=0
+else
+	disp	=1
+end
+
+--■関数---------------------------------------------------------------------
+local function dfire(asp,ch,xx,yy,rs,rsx,al,dsz,adx,ady,sz)
+	obj.load("figure","円",col1,dsz)
+	obj.effect()
+	obj.effect("ノイズ","強さ",100,"速度X",rsx,"速度Y",-1,"変化速度",ch,"周期X",0.5,"周期Y",1,"しきい値",fwd,"type",4)
+	obj.effect("グロー","強さ",40,"拡散",gra,"光成分のみ",0)
+	obj.effect("ラスター","横幅",rw,"高さ",200,"周期",rs,"縦ラスター",1,"ランダム振幅",1)
+	obj.effect("マスク","サイズ",dsz/2,"ぼかし",100,"type",1)
+	obj.aspect=asp
+	obj.draw(xx+adx,yy+ady,0,1/sz,al,0,0,90)
+end
+
+--■背面に描画-------------------------------------------------------------
+obj.copybuffer("tmp","obj")
+for i=0,nm-1 do
+	rd1	=obj.rand(-ww,ww,sd+i+1,1)
+	rd2	=obj.rand(-hh,hh,sd+i+2,1)
+	ch	=obj.rand(spd,spd+10,sd+i+3,1)
+	rs	=obj.rand(-spd,spd,sd+i+4,1)/10
+	rsx	=obj.rand(5,bre,sd+i+5,1)/10
+	dfire(asp,ch,rd1,rd2,rs,rsx,1,dsz,adx,ady,sz)
+end
+obj.load("tempbuffer")
+
+--■本体の描画-------------------------------------------------------------
+
+if(disp==0)then	--チェックがある時は描画しない
+else
+	obj.effect()
+	obj.draw()	--チェックがない時は普通に描画
+end
+--■前面に描画-------------------------------------------------------------
+if(front==1 and disp==1)then
+for i=0,nm-1 do
+	rd1	=obj.rand(-ww,ww,sd+i+1,1)
+	rd2	=obj.rand(-hh,hh,sd+i+2,1)
+	ch	=obj.rand(spd,spd+10,sd+i+3,1)
+	rs	=obj.rand(-spd,spd,sd+i+4,1)/10
+	rsx	=obj.rand(5,bre,sd+i+5,1)/10
+	dfire(asp,ch,rd1,rd2,rs,rsx,(100-falpha)/100,dsz,adx,ady,sz)
+end	--「本体の描画」がOFFの時も邪魔なので前面は描画しない
+end	--ifの終わり
+
+
+@帯電エフェクト
+--track0:光強度,0,100,20,0.1
+--track1:表示速度,0,100,100,1
+--track2:密度,0,100,3,1
+--track3:電撃ｻｲｽﾞ,0,800,50,1
+--check0:光成分のみ,0
+--dialog:前面にも表示/chk,local front=1;前面部透明度[%],local falpha=80;基本色/col,local col1=0xffffff;光色/col,local col2=0xffff00;描画範囲[%],local range=100;位置調整X,local px=0;位置調整Y,local py=0;個別表示密度,local vsz=100;速度X,local nsx=100;速度Y,local nsy=100;変化速度,local chg=50;濃さ(0-100),local nstr=50;太さ(0-50),local thr=5;乱数の種,local sd=1;
+
+--■変数-------------------------------------------------------------------
+local	disp,num,str,size,fal,thw,thh,rng,ww,hh,ii,jj
+local	xx1,yy1,rr1,al1,xx2,yy2,rr2,al2,ox,oy,dsz,dal,drr
+disp	=-1000+obj.track1*10
+num	=obj.track2
+str	=obj.track0
+size	=obj.track3/100
+fal	=(100-falpha)/100
+thw	=math.max(100,math.min(200,(200-nstr)))
+thh	=math.max(95,math.min(100,(100-thr/10)))
+rng	=range/2
+ww	=obj.w
+hh	=obj.h
+if(px==nil)then px=0 end
+if(py==nil)then py=0 end
+
+--■関数-------------------------------------------------------------------
+local function drawing(ox,oy,dsz,dal,drr)
+	obj.load("figure","円",col2,vsz)
+	obj.effect("ノイズ","強さ",thw,
+			"速度X",nsx,"速度Y",nsy,"変化速度",chg,
+			"周期X",1,"周期Y",1,"しきい値",thh,"type",4)
+	obj.effect("縁取り","サイズ",1,"color",col1)
+	obj.effect("グロー","強さ",str,"拡散",30,
+			"しきい値",30,"color",col2,"no_color",1)
+	obj.effect()
+obj.draw(ox,oy,0,dsz,dal,0,0,drr)
+end
+
+--■背面に描画-------------------------------------------------------------
+obj.copybuffer("tmp","obj")
+
+for ii=1 ,num do
+	xx1	=obj.rand(-ww,ww,obj.frame*ii+sd,1)
+	yy1	=obj.rand(-hh,hh,obj.frame*ii+sd+1,1)
+	rr1	=obj.rand(0,360,obj.frame*ii+sd,1)
+	al1	=math.max(0,obj.rand(disp,100)/100)
+drawing(xx1*rng/100+px,yy1*rng/100+py,size,al1,rr1)
+end
+
+obj.load("tempbuffer")
+--■本体の描画-------------------------------------------------------------
+
+if(obj.check0)then	--チェックがある時は描画しない
+else
+	obj.draw()	--チェックがない時は普通に描画
+end
+--■前面に描画-------------------------------------------------------------
+
+if(front==1)then
+	for jj=1 ,num do
+	xx2	=obj.rand(-ww,ww,obj.frame*jj,1)
+	yy2	=obj.rand(-hh,hh,obj.frame*jj+1,1)
+	rr2	=obj.rand(0,360,obj.frame*jj,1)
+	al2	=math.max(0,obj.rand(disp,100)/100)
+	drawing(xx2*rng/100*px,yy2*rng/100+py,size,al2*fal,rr2)
+	end
+end
+
+@凍結風装飾
+--track0:追加ｻｲｽﾞ,0,100,10,1
+--track1:縁ぼかし,0,100,50,1
+--track2:模様,0,20,5,0.01
+--track3:濃さ,0,200,100,0.1
+--check0:装飾部のみに効果,1
+--dialog:色/col,local col1=0xffffff;模様タイプ,local ntyp=1;ノイズ速度X,local nx=0;ノイズ速度Y,local ny=0;ノイズ変化速度,local nsp=0;
+
+--■変数-----------------------------------------------------
+eg	=obj.track0
+bl	=obj.track1
+vein	=obj.track2
+nstr	=200-obj.track3
+
+--■ノイズタイプ指定部分-------------------------------------
+if(1<=ntyp and ntyp<=6)then
+	typ=ntyp-1
+else
+	typ=0
+end
+--■本体描画-------------------------------------------------
+if(obj.check0)then
+else
+obj.effect()
+end
+obj.draw()
+--■フィルタ付き装飾部分-------------------------------------
+obj.effect("単色化","color",col1,"輝度を保持する",0)
+obj.effect("縁取り","サイズ",eg,"ぼかし",bl,"color",col1)
+obj.effect("オフスクリーン描画")
+obj.effect("ノイズ","強さ",nstr,"速度X",nx,"速度Y",ny,
+	"変化速度",nsp,"周期X",vein,"周期Y",vein,"type",typ)
+obj.effect()
+obj.draw()
+
+@背後に重ねる
+--track0:左右位置,-1000,1000,0,0.1
+--track1:上下位置,-1000,1000,0,0.1
+--track2:ｻｲｽﾞ[%],0,500,120,0.1
+--track3:透明度[%],0,100,0,1
+--check0:単色で塗りつぶす,0
+--dialog:塗りつぶしの色/col,local col1=0xcccccc;ﾌｨﾙﾀ適用[後]/chk,local back=1;ﾌｨﾙﾀ適用[前]/chk,local front=0;X回転,local b_rx=0;Y回転,local b_ry=0;Z回転,local b_rz=0;縦横比[%],local b_asp=0;点滅させる/chk,local blink=0;点滅回数/1秒,local blsp=3;点滅停止秒,local blstp=300;
+
+local	x_back,y_back,size,alpha,aspect,tt,blal
+x_back	=obj.track0
+y_back	=obj.track1
+size	=obj.track2/100
+alpha	=1-obj.track3/100
+aspect	=b_asp/100
+
+--■点滅処理-------------------------------
+tt=(math.floor(obj.time*blsp))%2
+if(blink==1 and obj.time<blstp)then
+	if(tt==1)then
+		blal=0
+	else
+		blal=1
+	end
+else
+	blal=1
+end
+-------------------------------------------
+obj.copybuffer("tmp","obj")
+
+--■背面画像にフィルタを適用するかどうか-------------------------------
+if(back==1)then
+	obj.effect()
+else end
+
+--■背面画像の単色化---------------------------------------------------
+if(obj.check0)then
+	obj.effect("単色化","強さ",100,"輝度を保持する",0,"color",col1)
+else end
+
+--■背面画像描画処理---------------------------------------------------
+obj.aspect=aspect
+obj.draw(x_back,y_back,0,size,alpha*blal,b_rx,b_ry,b_rz)
+
+--■前面画像描画処理---------------------------------------------------
+obj.load("tempbuffer")
+if(front==1)then
+	obj.effect()
+else end
+obj.draw()
+
+
+
+--[[
+■更新履歴
+12/09/20 変数のローカル化と明滅処理を追加
+12/08/25 作成
+]]
+
+@簡易分身
+--track0:左右位置,-1000,1000,0,0.1
+--track1:上下位置,-1000,1000,0,0.1
+--track2:透明度,0,100,80,1
+--track3:加算倍率,-100,500,50,0.1
+--check0:背面に描画,0
+--dialog:描画数,local num=5;分身のみにﾌｨﾙﾀ/chk,local exc=1;縦横比[%],local b_asp=0;
+
+--■変数--------------------------------------------
+local	ax,ay,alpha,sz,asp,main,sub,size,oz,oy
+ax	=obj.track0
+ay	=obj.track1
+alpha	=1-obj.track2/100
+sz	=obj.track3/100
+asp	=b_asp/100
+--●numに小数点やらマイナスを入れるフトドキ者対策-
+num	=math.floor(math.max(0,num))
+
+--●「分身のみにフィルタ」のフラグ処理------------
+if(exc==1)then
+	main,sub=1,1
+else
+	main,sub=0,0
+end
+
+--■背面に描画する処理------------------------------
+if(obj.check0)then
+
+obj.copybuffer("tmp","obj")
+
+for i=0,num-1 do	---▼forここから------------------
+	if(0<=sz)then
+		size	=1+(sz/num)*(num-i)
+		ox	=ax/num*(num-i)
+		oy	=ay/num*(num-i)
+	else
+		size	=1+sz/num*(num-i)
+		ox	=ax/num*(num-i)
+		oy	=ay/num*(num-i)
+	end
+	obj.effect()
+	obj.aspect=asp
+	obj.draw(ox,oy,0,size,alpha)
+	obj.load("tempbuffer")
+
+end	--▲forここまで---------------------------
+
+--●本体へのエフェクト適用処理----------------
+  if(main==0)then obj.effect() else end
+----------------------------------------------
+obj.draw()
+
+--■前面に描画する処理------------------------------
+else
+
+--●本体へのエフェクト適用処理------------
+  if(main==0)then obj.effect() else end
+------------------------------------------
+obj.draw()
+
+obj.copybuffer("tmp","obj")
+
+for i=1,num do	---▼forここから------------------
+	if(0<=sz)then
+		size	=1+(sz/num)*i
+		ox	=ax/num*i
+		oy	=ay/num*i
+	else
+		size	=1+sz/num*i
+		ox	=ax/num*i
+		oy	=ay/num*i
+	end
+
+	--●分身へのエフェクト適用処理------------
+	  if(sub==1)then obj.effect() else end
+	------------------------------------------
+
+	obj.aspect=asp
+	obj.draw(ox,oy,0,size,alpha)
+	obj.load("tempbuffer")
+
+end	--▲forここまで--------------------------
+
+--■前面/背面処理の終了-----------------------------
+end
+
+@光帯通過
+--track0:帯幅,-1000,1000,30,0.1
+--track1:帯角度,-360,360,120,0.1
+--track2:横速度,-10,10,1,0.1
+--track3:縦速度,-10,10,0,0.1
+--check0:前面のみフィルタ,1
+--dialog:帯の色/col,local col=0xffffff;移動待ち時間,local waitt=0;ぼかし,local gra=10;位置調整X[%],local xst=0;位置調整Y[%],local yst=0;
+
+--●変数---------------------------------------------------------
+local	wid,agl,yspeed,xspeed,ww,hh,xsp,ysp,xrv,yrv,xmv,ymv,wt
+wid	=obj.track0
+agl	=obj.track1
+xspeed	=obj.track2
+yspeed	=obj.track3
+ww	=obj.w+wid+(obj.w*xst/100)
+hh	=obj.h+wid+(obj.h*yst/100)
+xsp	=math.abs(xspeed)
+ysp	=math.abs(yspeed)
+wt	=math.max(0,(obj.time-waitt))
+--▼前面のみフィルタ---------------------
+if(obj.check0)then else obj.effect() end
+--▼X方向フラグ-------
+if(xspeed<0)then
+	xrv	=-1
+elseif(xspeed==0)then
+	xrv	=0
+else
+	xrv	=1
+end
+--▼Y方向フラグ-------
+if(yspeed<0)then
+	yrv	=-1
+elseif(yspeed==0)then
+	yrv	=0
+else
+	yrv	=1
+end
+-----------------------------------------
+xmv	=(-ww/2+ww*(wt/(obj.totaltime-wt))*xsp)*xrv
+ymv	=(-hh/2+hh*(wt/(obj.totaltime-wt))*ysp)*yrv
+
+--●本体の描写---------------------------
+obj.draw()
+--●前面部描写＆フィルタ追加-------------------------------------
+obj.effect("単色化","強さ",100,"輝度を保持する",0,"color",col)
+obj.effect("斜めクリッピング","中心X",xmv,"中心Y",
+		ymv,"角度",agl,"ぼかし",gra,"幅",wid)
+obj.effect()
+obj.draw()
+
+
+@徐々にエッジ抽出
+--track0:度合い,0,100,50,1
+--track1:ｴｯｼﾞ強さ,0,1000,100,1
+--track2:しきい値,-100,100,0,0.01
+--track3:元絵ｻｲｽﾞ,0,800,100,0.1
+--check0:輝度エッジを抽出,1
+--dialog:色/col,local col1=0xffffff;
+
+local al,eg,dzm
+al	=obj.track0/100
+dzm	=obj.track3/100
+if(obj.check0)then
+	eg	=1
+else
+	eg	=0
+end
+
+obj.setoption("drawtarget","tempbuffer",obj.w,obj.h)
+obj.draw(0,0,0,dzm,1-al)
+obj.effect("エッジ抽出","強さ",obj.track1,
+	"しきい値",obj.track2,"輝度エッジを抽出",eg,"color",col1)
+obj.draw(0,0,0,dzm,al)
+obj.load("tempbuffer")

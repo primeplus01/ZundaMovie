@@ -1,0 +1,167 @@
+@FI軽い図形(四角形)
+--track0:X幅,0,20000,100
+--track1:Y幅,0,20000,100
+--track2:X中心%,-100,100,0
+--track3:Y中心%,-100,100,0
+--color:0xffffff
+obj.load("figure","四角形",color,2)
+sx=obj.track0/2
+sy=obj.track1/2
+cx=obj.track2/100
+cy=obj.track3/100
+obj.drawpoly(
+-sx*(1+cx),-sy*(1+cy),0,sx*(1-cx),-sy*(1+cy),0,
+sx*(1-cx),sy*(1-cy),0,-sx*(1+cx),sy*(1-cy),0)
+
+@FI図形-色調整
+--track0:サイズ,0,2000,100
+--track1:赤,0,255,255
+--track2:緑,0,255,255
+--track3:青,0,255,255
+--dialog:種類/fig,name="円";
+r=math.floor(obj.track1)
+g=math.floor(obj.track2)
+b=math.floor(obj.track3)
+color=string.format("0x%02x%02x%02x",r,g,b)
+obj.load("figure",name,color,obj.track0,1000)
+
+@FIランダムに輪が出現2
+--track0:時間[s],0,10,2
+--track1:間隔[s],0.1,10,1
+--track2:サイズ,0,1000,500
+--track3:ライン幅,0,1000,10
+--dialog:種類/fig,name="円";
+n=obj.totaltime/obj.track1
+for i=0,n do
+ra=obj.rand(0,255,0,i)
+rb=obj.rand(0,255,1,i)
+rc=obj.rand(0,255,2,i)
+color=string.format("0x%02x%02x%02x",ra,rb,rc)
+obj.load("figure",name,color,obj.track2,obj.track3)
+t=(obj.track0-obj.time+i*obj.track1)/obj.track0
+if( t > 0 ) then
+  if( t > 1 ) then
+    obj.alpha = 0
+    t = 1
+  end
+else
+  t=0
+end
+x=rand(-obj.screen_w/2,obj.screen_w/2,i,0)
+y=rand(-obj.screen_h/2,obj.screen_h/2,i,0)
+obj.draw(x,y,0,1-t,t)
+end
+
+@FIランダムに小文字が出現
+--track0:時間[s],0,10,2
+--track1:間隔[s],0.1,10,1
+--track2:サイズ,0,256,100
+--dialog:フォント,font="MS UI Cothic";文字色/col,col1=0xffffff;影・縁色/col,col2=0x000000;装飾タイプ[0-4],type=0;
+word={"a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"}
+n=obj.totaltime/obj.track1
+for i=0,n do
+obj.setfont(font,obj.track2,type,col1,col2)
+obj.load("text",word[obj.rand(1,#word,i,0)])
+t=(obj.track0-obj.time+i*obj.track1)/obj.track0
+if( t > 0 ) then
+  if( t > 1 ) then
+    obj.alpha = 0
+    t = 1
+  end
+else
+  t=0
+end
+x=rand(-obj.screen_w/2,obj.screen_w/2,i,0)
+y=rand(-obj.screen_h/2,obj.screen_h/2,i,0)
+obj.draw(x,y,0,1-t,t,0,0,obj.rand(0,360,0,i))
+end
+
+@FIランダムに大文字が出現
+--track0:時間[s],0,10,2
+--track1:間隔[s],0.1,10,1
+--track2:サイズ,0,256,100
+--dialog:フォント,font="MS UI Cothic";文字色/col,col1=0xffffff;影・縁色/col,col2=0x000000;装飾タイプ[0-4],type=0;
+word={"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}
+n=obj.totaltime/obj.track1
+for i=0,n do
+obj.setfont(font,obj.track2,type,col1,col2)
+obj.load("text",word[obj.rand(1,#word,i,0)])
+t=(obj.track0-obj.time+i*obj.track1)/obj.track0
+if( t > 0 ) then
+  if( t > 1 ) then
+    obj.alpha = 0
+    t = 1
+  end
+else
+  t=0
+end
+x=rand(-obj.screen_w/2,obj.screen_w/2,i,0)
+y=rand(-obj.screen_h/2,obj.screen_h/2,i,0)
+obj.draw(x,y,0,1-t,t,0,0,obj.rand(0,360,0,i))
+end
+
+@FIメーター2
+--track0:高さ,0,900,10
+--track1:長さ,0,1600,400
+--track2:縁,0,20,5
+--dialog:縁色/col,wcolor=0x555555;
+h=obj.track0
+w=obj.track1
+f=obj.track2
+
+for i=0,2 do
+  if(i==0) then
+    obj.load("figure","背景",wcolor,100)
+    a=(obj.screen_h-h)/2
+    bb=(obj.screen_w-w)/2
+    obj.effect("クリッピング","上",a-f,"下",a-f,"右",bb-f,"左",bb-f)
+    obj.effect("凸エッジ")
+  elseif(i==1) then
+    obj.load("figure","背景",0x000000,100)
+    obj.effect("クリッピング","上",a,"下",a,"右",bb,"左",bb)
+  elseif(i==2) then
+    if(obj.time<obj.totaltime/5) then
+      color=0x00ff0
+    elseif(obj.time<obj.totaltime/5*2) then
+      color=0x00ffff
+    elseif(obj.time<obj.totaltime/5*3) then
+      color=0x00ff00
+    elseif(obj.time<obj.totaltime/5*4) then
+      color=0xffff00
+    else
+      color=0xff0000
+    end
+    obj.load("figure","背景",color,100)
+    b=(obj.screen_w-w+w/obj.totaltime*obj.time)/2
+    obj.effect("クリッピング","上",a,"下",a,"右",b,"左",b)
+  end
+obj.draw()
+end
+
+@マウスポインタ
+--track0:サイズ,1,100,10,1
+--dialog:色/col,col0=0xffffff;縁色/col,col1=0x000000;
+s=obj.track0
+X,Y=12,21
+function fdot(x,y,col)
+  obj.load("figure","四角形",col,1)
+  x0=(-X/2+x)*s
+  x1=(-X/2+x+1)*s
+  y0=(-Y/2+y)*s
+  y2=(-Y/2+y+1)*s
+  obj.drawpoly(x0,y0,0,x1,y0,0,x1,y2,0,x0,y2,0)
+end
+
+pt0x={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,2,2,3,3,4,4,4,5,5,5,6,6,6,7,7,7,7,7,7,8,8,8,8,8,9,9,9,9,9,10,10,10,10,11}
+pt0y={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,1,15,2,14,3,13,4,12,13,5,14,15,6,16,17,7,11,12,13,18,19,8,11,14,15,20,9,11,16,17,20,10,11,18,19,11}
+pt1x={1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,7,7,7,7,7,7,7,8,8,8,8,8,8,9,9,9}
+pt1y={2,3,4,5,6,7,8,9,10,11,12,13,14,3,4,5,6,7,8,9,10,11,12,13,4,5,6,7,8,9,10,11,12,5,6,7,8,9,10,11,6,7,8,9,10,11,12,13,7,8,9,10,11,12,13,14,15,8,9,10,14,15,16,17,9,10,16,17,18,19,10,18,19}
+
+obj.setoption("dst","tmp",X*s,Y*s)
+for i=1,#pt0x do
+  fdot(pt0x[i],pt0y[i],col1)
+end
+for i=1,#pt1x do
+  fdot(pt1x[i],pt1y[i],col0)
+end
+obj.load("tempbuffer")

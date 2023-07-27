@@ -1,0 +1,53 @@
+--track0:ŠÔŠu[s],-5,5,0.3,0.01
+--track1:‘¬“x,-1000,1000,270
+--track2:‘Ò‹@[s],0,10,0,0.01
+--track3:“oê‡,0,5,0,1
+--dialog:X²‰ñ“]/chk,rx=0;Y²‰ñ“]/chk,ry=0;Z²‰ñ“]/chk,rz=1;ˆÚ“®‹——£,id_len=0;ˆÚ“®Šp“x,id_r=0;
+
+local ts=obj.time-obj.track2
+local tb=math.abs(obj.track0)
+local rv = obj.track1
+local jun =obj.track3
+local ta=math.abs(360/rv)
+
+if(jun<1) then                                                   --‡”Ô‚É“oê
+	mode=obj.index
+elseif(jun<2) then                                               --Œã‚ë‚©‚ç“oê
+	mode=obj.num-1-obj.index
+elseif(jun<3) then                                               --ƒ‰ƒ“ƒ_ƒ€‡‚É“oê
+	local indexes = {}
+	for i=0,obj.num-1 do
+		indexes[i+1]=i
+	end
+	for i=0,obj.num-1 do
+		local dest = 0
+		dest=rand(0,obj.num-1, -obj.num,i+1)
+		local swap      = indexes[i+1]
+		indexes[i+1]    = indexes[dest+1]
+		indexes[dest+1] = swap
+	end
+	mode=indexes[obj.index+1]
+elseif(jun<4) then                                              --ƒ‰ƒ“ƒ_ƒ€ŠÔŠu‚É“oê
+ 	mode=rand(0,100*(obj.num-1),obj.index,0)/100
+elseif(jun<5) then                                              --“à‘¤‚©‚ç“oê
+ 	mode=math.abs((obj.num-1)/2-obj.index)
+else                                                            --ŠO‘¤‚©‚ç“oê
+ 	mode=(obj.num-1)/2-math.abs((obj.num-1)/2-obj.index)
+end
+
+if(obj.track0<0) then
+	i=-(-ta-obj.num*tb-obj.time-obj.track2+obj.totaltime+mode*tb)/ta
+else
+	i=(ta-ts+mode*tb)/ta
+end
+
+if(i>0) then
+	if(id_r==20101118) then                                 --‰B‚µƒpƒ‰ƒ[ƒ^
+		id_r=obj.rand(0,360,0,obj.index)
+	end
+	obj.ox = obj.ox + math.cos(math.rad(id_r))*i*id_len
+	obj.oy = obj.oy + math.sin(math.rad(id_r))*i*id_len
+	obj.rx = obj.rx + rv*i*rx
+	obj.ry = obj.ry + rv*i*ry
+	obj.rz = obj.rz + rv*i*rz
+end

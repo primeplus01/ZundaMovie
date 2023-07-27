@@ -1,0 +1,198 @@
+@三日月歪め
+--track0:歪要素1,0,1000,50,1
+--track1:歪要素2,0,1000,300,1
+--track2:渦量,-500,500,75,0.01
+--track3:ぼかし,0,100,10,1
+--dialog:縁サイズ,local edge_size=10;縁の色/col,local edge_col=0xff0000;縦ラスター/chk,local column=0;ランダム振幅/chk,local rand_raster=0;渦中心,local center=100;渦係数,local var=1;縦横比[%],local aspect=0;
+
+local eddy=obj.track2/100*var
+
+
+obj.effect("縁取り","サイズ",edge_size,"color",edge_col)
+obj.effect("ラスター","横幅",obj.track0,"高さ",obj.track1,"周期",0.00,"縦ラスター",column,"ランダム振幅",rand_raster)
+obj.effect("極座標変換","中心幅",center,"渦巻",eddy)
+obj.effect("ぼかし","範囲",obj.track3)
+
+obj.aspect=aspect/100
+
+
+
+-------------------------------------------------------------
+---▼ み、見たなぁぁぁ！！！ヽ(#`Д´)ﾉ			▼---
+---▼ ……関数や配列を使えばもっと短くなるのかな……。	▼---
+---▼ 勉強不足です。スパゲッティでお恥ずかしい……。	▼---
+-------------------------------------------------------------
+@回転ワイプ
+--track0:回転始点,0,360,0,1
+--track1:図形ｻｲｽﾞ,0,800,100,0.01
+--track2:縦横比,-100,100,0,1
+--track3:ぼかし量,0,300,10,1
+--check0:逆回転,0
+
+local w2,h2,tf,split,angle,riverse,add,quarter,t,r,clip_rad,alpha1,alpha2,dx1,dy1
+local frag,ax,bx,ay,by,ax0,ax1,ax2,ax3,ay0,ay1,ay2,ay3,au0,au1,au2,au3,av0,av1,av2
+local av3,bx0,bx1,bx2,bx3,by0,by1,by2,by3,bu0,bu1,bu2,bu3,bv0,bv1,bv2,bv3,w,h
+
+obj.effect()
+w	=obj.w/2
+h	=obj.h/2
+w2	=obj.w
+h2	=obj.h
+tf	=obj.totalframe
+split	=obj.totalframe/4
+angle	=obj.track0
+if(obj.check0)then	----逆回転処理
+	riverse	=-1
+	add	=180
+else
+	riverse	=1
+	add	=0
+end
+
+--第一クォーター----------------------------------------------
+if	((0<=obj.frame) and (obj.frame<=tf*0.25))then
+	quarter	=1
+	t	=((obj.frame-split*(quarter-1))/split)*180
+	r	=angle+180
+	clip_rad=angle+180+t+add
+	alpha1	=0
+	alpha2	=1
+--第二クォーター----------------------------------------------
+elseif	((tf*0.25<obj.frame) and (obj.frame<=tf*0.5))then
+	quarter	=2
+	t	=((obj.frame-split*(quarter-1))/split)*180
+	r	=angle+t
+	clip_rad=angle+add
+	alpha1	=1
+	alpha2	=1
+--第三クォーター----------------------------------------------
+elseif	((tf*0.5<obj.frame) and (obj.frame<=tf*0.75))then
+	quarter	=3
+	t	=((obj.frame-split*(quarter-1))/split)*180
+	r	=angle+180
+	clip_rad=angle+t+add
+	alpha1	=1
+	alpha2	=1
+
+--第四クォーター----------------------------------------------
+elseif	((tf*0.75<obj.frame) and (obj.frame<=tf))then
+	quarter	=4
+	t	=((obj.frame-split*(quarter-1))/split)*180
+	r	=angle
+	clip_rad=angle+180+t+add
+	alpha1	=0
+	alpha2	=1
+else
+	alpha1	=0
+	alpha2	=0
+
+end
+--360度になった時の補強------------------------------
+if((r==360)or(r==720))then r=0 end
+
+--座標計算----------------------------------------------------
+dx1=h/math.tan((r*riverse)*math.pi/180)
+dy1=w*math.tan((r*riverse)*math.pi/180)
+
+if(0<=r%360 and r%360<=180)then	--上半分----
+	if	(dx1>=w)then
+		frag=1		--右辺移動中
+		ax,bx=w,w	--x右固定
+		ay,by=-dy1,-dy1	--y上移動
+	elseif	(dx1<=-w)then
+		frag=3		--左辺移動中
+		ax,bx=-w,-w	--x左固定
+		ay,by=dy1,dy1	--y下移動
+	else
+		frag=2		--上辺移動中
+		ax,bx=dx1,dx1	--x左移動
+		y=-h,-h		--y上固定
+	end
+else	--------------------------下半分----
+	if	(dx1>=w)then
+		frag=3		--左辺移動中
+		ax,bx=-w,-w	--x左固定
+		ay,by=dy1,dy1	--y下移動
+	elseif	(dx1<=-w)then
+		frag=1		--右辺移動中
+		ax,bx=w,w	--x右固定
+		ay,by=-dy1,-dy1	--y上移動
+	else
+		frag=4		--下辺移動中
+		ax,bx=-dx1,-dx1	--x右移動
+		ay,by=h,h	--y下固定
+	end
+end-------------------------------------------
+
+--ここから描画------------------------------------------------
+obj.setoption("drawtarget","tempbuffer",w2,h2)
+
+--図形1の描画------------------------------------------
+--右辺移動中-----------------------------
+if(frag==1)then
+	ax0,ax1,ax2,ax3=-w,w,w,-w
+	ay0,ay1,ay2,ay3=-h,-h,ay,-ay
+	au0,au1,au2,au3=0,w2,w2,0
+	av0,av1,av2,av3=0,0,h+ay,h-ay
+--上辺移動中-----------------------------
+elseif(frag==2)then
+	ax0,ax1,ax2,ax3=-w,ax,-ax,-w
+	ay0,ay1,ay2,ay3=-h,-h,h,h
+	au0,au1,au2,au3=0,w+ax,w-ax,0
+	av0,av1,av2,av3=0,0,h2,h2
+--左辺移動中-----------------------------
+elseif(frag==3)then
+	ax0,ax1,ax2,ax3=-w,w,w,-w
+	ay0,ay1,ay2,ay3=ay,-ay,h,h
+	au0,au1,au2,au3=0,w2,w2,0
+	av0,av1,av2,av3=h+ay,h-ay,h2,h2
+--下辺移動中-----------------------------
+elseif(frag==4)then
+	ax0,ax1,ax2,ax3=-ax,w,w,ax
+	ay0,ay1,ay2,ay3=-h,-h,h,h
+	au0,au1,au2,au3=w-ax,w2,w2,w+ax
+	av0,av1,av2,av3=0,0,h2,h2
+end--------------------------------------
+obj.drawpoly(
+ax0,ay0,0,ax1,ay1,0,ax2,ay2,0,ax3,ay3,0,
+au0,av0,au1,av1,au2,av2,au3,av3,alpha1
+)
+--図形2の描画------------------------------------------
+obj.effect("斜めクリッピング","角度",-clip_rad*riverse)
+
+--右辺移動中-----------------------------
+if(frag==1)then
+	bx0,bx1,bx2,bx3=-w,w,w,-w
+	by0,by1,by2,by3=-by,by,h,h
+	bu0,bu1,bu2,bu3=0,w2,w2,0
+	bv0,bv1,bv2,bv3=h-by,h+by,h2,h2
+--上辺移動中-----------------------------
+elseif(frag==2)then
+	bx0,bx1,bx2,bx3=bx,w,w,-bx
+	by0,by1,by2,by3=-h,-h,h,h
+	bu0,bu1,bu2,bu3=w+bx,w2,w2,w-bx
+	bv0,bv1,bv2,bv3=0,0,h2,h2
+--左辺移動中-----------------------------
+elseif(frag==3)then
+	bx0,bx1,bx2,bx3=-w,w,w,-w
+	by0,by1,by2,by3=-h,-h,-by,by
+	bu0,bu1,bu2,bu3=0,w2,w2,0
+	bv0,bv1,bv2,bv3=0,0,h-by,h+by
+--下辺移動中-----------------------------
+elseif(frag==4)then
+	bx0,bx1,bx2,bx3=-w,-bx,bx,-w
+	by0,by1,by2,by3=-h,-h,h,h
+	bu0,bu1,bu2,bu3=0,w-bx,w+bx,0
+	bv0,bv1,bv2,bv3=0,0,h2,h2
+end--------------------------------------
+
+obj.drawpoly(
+bx0,by0,0,bx1,by1,0,bx2,by2,0,bx3,by3,0,
+bu0,bv0,bu1,bv1,bu2,bv2,bu3,bv3,alpha2
+)
+
+obj.load("tempbuffer")
+--ここまで描画------------------------------------------------
+obj.zoom=obj.track1/100
+obj.aspect=obj.track2/100
+obj.effect("ぼかし","範囲",obj.track3)

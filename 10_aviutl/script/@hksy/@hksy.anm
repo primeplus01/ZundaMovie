@@ -1,0 +1,1404 @@
+--------------------------------------------------
+@ランダム配置
+--------------------------------------------------
+--track0:個数,1,1000,10,1
+--track1:X範囲,0,2000,512
+--track2:Y範囲,0,2000,384
+--track3:Z範囲,0,2000,384
+--dialog:2D回転/chk,r2=1;3D回転/chk,r3=0;拡大率変更/chk,zoomf=0;拡大率最小値,zmin=50;
+obj.effect()
+
+local l_rand = obj.rand	-- obj.つけなくても使えるのが不安
+
+a = 2000
+
+w = obj.track1 / 2
+h = obj.track2 / 2
+d = obj.track3 / 2
+
+for i=1,obj.track0 do
+  x = l_rand(-a, a,i,1000)/a*w
+  y = l_rand(-a, a,i,2000)/a*h
+  z = l_rand(-a, a,i,3000)/a*d
+
+  if zoomf==0 then
+    zoom = 1
+  else
+    zoom = l_rand(zmin,100,i,4000)/100
+  end
+  rx = ( l_rand(0,360,i,5000) * y * z /a +y+z ) * r3
+  ry = ( l_rand(0,360,i,6000) * x * z /a +x+z ) * r3
+  rz = ( l_rand(0,360,i,7000) * x * y /a +x+y ) * r2
+
+  obj.draw(x,y,z,zoom,1,rx,ry,rz)
+
+end
+
+
+
+--------------------------------------------------
+@通常弾
+--------------------------------------------------
+--track0:個数,0,1000,10,1
+--track1:スピード,0,1000,100
+--check0:角度を変えない,0
+obj.effect()
+
+l = obj.w*2
+for i=1,obj.track0 do
+  r = 360*i/obj.track0
+  x =  math.sin(r*math.pi/180) *obj.time*obj.track1
+  y = -math.cos(r*math.pi/180) *obj.time*obj.track1
+  if( obj.check0 )then
+    r = 0
+  end
+
+  obj.draw(x,y,0,1,1,0,0,r)
+end
+
+
+
+--------------------------------------------------
+@％位置指定2
+--------------------------------------------------
+--track0:X,-100,100,0
+--track1:Y,-100,100,0
+--track2:タイプ,1,3,2,1
+
+-- 内側,中央,外側
+
+if	(obj.track2 == 1) then
+  w = obj.w/2 *obj.zoom
+  h = obj.h/2 *obj.zoom
+elseif	(obj.track2 == 2) then
+  w = 0
+  h = 0
+elseif	(obj.track2 == 3) then	-- 念のため
+  w = -obj.w/2 *obj.zoom
+  h = -obj.h/2 *obj.zoom
+end
+
+
+obj.ox = (obj.track0/100 * (obj.screen_w/2))-(w * obj.track0/100)
+obj.oy = (obj.track1/100 * (obj.screen_h/2))-(h * obj.track1/100)
+
+
+
+--------------------------------------------------
+@画像ループ 透明度ランダム
+--------------------------------------------------
+--track0:横回数,1,100,1,1
+--track1:縦回数,1,100,1,1
+--track2:横間隔,-500,500,0
+--track3:縦間隔,-500,500,0
+--dialog:BPM,bpm=180;オフセット,offset=0;
+obj.effect()
+
+local l_rand	= obj.rand
+local draw	= obj.draw
+
+-----
+
+xc = ( obj.track0 / 2 ) + 0.5
+yc = ( obj.track1 / 2 ) + 0.5
+
+---
+
+-- BPMの計算
+
+  -- obj.frame を使わないフレームの算出
+  frame = obj.time*obj.framerate
+
+  -- 1分あたりのフレーム数
+  fm = 60 * obj.framerate
+
+  time = math.floor( ( frame - offset ) / ( fm / bpm ) )
+
+
+---
+
+for i=1,obj.track0 do
+  for j=1,obj.track1 do
+
+    x = ( ( obj.w + obj.track2  ) * ( i - xc ) )
+    y = ( ( obj.h + obj.track3  ) * ( j - yc ) )
+
+
+    seed  = l_rand( 0, 100, i, j ) + time
+    alpha = l_rand( 0, 100, seed, obj.layer ) / 100
+
+    draw( x, y, 0, 1, alpha )
+
+  end
+end
+
+
+
+--------------------------------------------------
+@画面フィット
+--------------------------------------------------
+--track0:拡大率,0,100,100
+--track1:タイプ,1,3,1,1
+
+
+zoom = obj.track0/100
+xh = obj.screen_h / obj.h * zoom
+xw = obj.screen_w / obj.w * zoom
+
+mode = math.floor( obj.track1 )
+
+-- switch文ェ…
+if	( mode == 1 ) then	-- 自動判別
+
+  if ( ( obj.w * xh ) > obj.screen_w ) then
+    obj.zoom = xw	-- 横
+  else
+    obj.zoom = xh	-- 縦
+  end
+
+elseif	( mode == 2 ) then	-- 縦
+  obj.zoom = xh
+elseif	( mode == 3 ) then	-- 横
+  obj.zoom = xw
+end
+
+
+
+--------------------------------------------------
+@それらしき角度に傾ける
+--------------------------------------------------
+--track0:静止時,-360,360,0
+--track1:調査範囲,0,100,0,1
+x = obj.x - obj.getvalue("X", obj.time+((obj.track1+1)/obj.framerate) )
+y = obj.y - obj.getvalue("Y", obj.time+((obj.track1+1)/obj.framerate) )
+
+if ( x==0 and y==0 )then	-- 動かないとき
+  obj.rz = obj.rz + obj.track0
+else				-- 動くとき
+  obj.rz = obj.rz + math.atan2( y, x )  /math.pi*180-90
+end
+
+
+
+--------------------------------------------------
+@ピクセル拡大
+--------------------------------------------------
+--track0:拡大率,0,10000,100
+--check0:画面にフィット,0
+
+-----
+obj.setoption("blend","alpha_add")
+--obj.setoption("antialias",0)
+
+local getpixel = obj.getpixel
+local drawpoly = obj.drawpoly
+
+w,h = getpixel()
+
+-- 画面フィットの処理を流用
+if ( obj.check0 ) then
+  xh = obj.screen_h / h
+  xw = obj.screen_w / w
+
+  if ( ( w * xh ) > obj.screen_w ) then
+    zoom = xw	-- 横
+  else
+    zoom = xh	-- 縦
+  end
+
+else
+  zoom = obj.track0/100
+end
+
+obj.setoption( "drawtarget", "tempbuffer", w*zoom, h*zoom )
+
+sw = -w*zoom/2
+sh = -h*zoom/2
+
+for i=0,h-1 do	-- 縦
+  for j=0,w-1 do	-- 横
+
+    col0,a0 = getpixel(j-1,i)
+    col1,a1 = getpixel(j  ,i)
+    col2,a2 = getpixel(j+1,i)
+
+    cmp = ( j==0 or col1~=col0 ) or a0~=a1 and a1>0
+    if cmp then
+      x0 = sw+(zoom*j)
+      y0 = sh+(zoom*i)
+
+      -- 画像がボケるので
+      u0 = j+0.5
+      v0 = i+0.5
+    end
+
+    cmp = ( j==w-1 or col1~=col2 ) or a1~=a2 and a1>0
+    if cmp then
+      x1 = sw+(zoom*(j+1))
+      y1 = sh+(zoom*(i+1))
+
+      drawpoly(
+        x0,	y0,	0,
+        x1,	y0,	0,
+        x1,	y1,	0,
+        x0,	y1,	0,
+        u0,v0, u0,v0, u0,v0, u0,v0
+      )
+    end
+
+  end
+end
+
+
+obj.load("tempbuffer")
+
+
+
+--------------------------------------------------
+@拡散
+--------------------------------------------------
+--track0:拡散量,0,100,10
+--track1:範囲,1,100,10,1
+--track2:変化速度,0,100,0
+--dialog:拡散X/chk,difx=1;拡散Y/chk,dify=1;移動/chk,move=0;移動後色/col,col=0x000000;
+
+local l_rand	= obj.rand
+local copypixel	= obj.copypixel
+local putpixel	= obj.putpixel
+
+obj.pixeloption("type","col")
+obj.pixeloption("get","obj")
+obj.pixeloption("put","obj")
+obj.pixeloption("blend")
+
+w,h = obj.getpixel()
+p = w*h/100 *obj.track0
+d = obj.track1/2
+o = math.floor(obj.track2*obj.time)*10 + obj.layer
+
+-- ダイアログのチェックボックスがt/fではなく0/1なのを悪用
+rx = d*difx
+ry = d*dify
+
+
+for i=1,p do
+
+  dx = l_rand(   0, w, i,1000+o )
+  dy = l_rand(   0, h, i,2000+o )
+  sx = l_rand( -rx,rx, i,3000+o ) + dx
+  sy = l_rand( -ry,ry, i,4000+o ) + dy
+
+  copypixel( dx,dy,sx,sy )
+
+  if (move==1) then
+    putpixel(sx,sy,col,1)
+  end
+
+end
+
+
+
+--------------------------------------------------
+@境界ノイズぼかし
+--------------------------------------------------
+--track0:範囲,0,500,100
+--track1:周期,0,20,3,0.01
+--track2:縦横比,-100,100,0
+--track3:種類,0,3,0,1
+--dialog:変化速度,changesp=3;境界ぼかし/chk,isblur=1;範囲(％),vblur=99;透明度の境界をぼかす/chk,isbluralpha=1;
+
+if (obj.track2>0) then
+	sx = obj.track1
+	sy = obj.track1 * (100-obj.track2)/100
+else
+	sx = obj.track1 * (100+obj.track2)/100
+	sy = obj.track1
+end
+
+obj.effect("境界ぼかし","範囲",obj.track0)
+obj.effect("反転","透明度反転",1)
+obj.effect("ノイズ",
+	"変化速度",	changesp,
+	"周期X",	sx,
+	"周期Y",	sy,
+	"type",		obj.track3
+)
+obj.effect("反転","透明度反転",1)
+
+if (isblur==1) then
+	obj.effect("境界ぼかし",
+		"範囲",			obj.track0*(100-vblur)/100,
+		"透明度の境界をぼかす",	isbluralpha
+	)
+end
+
+
+
+--------------------------------------------------
+@斜めラスター
+--------------------------------------------------
+--track0:角度,-360,360,0
+--track1:横幅,0,1000,10,1
+--track2:高さ,0,1000,100
+--track3:周期,-10,10,1
+
+w,h = obj.getpixel()
+
+-- 回転後のオブジェクトサイズ
+sin = math.sin(math.rad(obj.track0+90))
+cos = math.cos(math.rad(obj.track0+90))
+dw = math.abs(sin * w) + math.abs(cos * h) +3	-- ちょっと削られるので
+dh = math.abs(sin * h) + math.abs(cos * w) +3
+
+-- ラスター後のオブジェクトサイズ…のつもり。回転未考慮。
+drw = w + SHIFT(obj.track1,1)
+drh = h + SHIFT(obj.track1,1)
+
+-----
+
+obj.setoption("drawtarget","tempbuffer",dw,dh)
+obj.draw(0,0,0,1,1,0,0,obj.track0)
+obj.load("tempbuffer")
+obj.effect("ラスター",	"横幅",obj.track1, "高さ",obj.track2, "周期",obj.track3)
+
+rw = obj.w
+rh = obj.h
+
+obj.setoption("drawtarget","tempbuffer",drw,drh)
+obj.draw(0,0,0,1,1,0,0,-obj.track0)
+
+obj.load("tempbuffer",0,0,drw,drh)
+
+
+
+--------------------------------------------------
+@フレームバッファ上書き
+--------------------------------------------------
+--track0:X,-2000,2000,0
+--track1:Y,-2000,2000,0
+--track2:拡大率,0,800,100,0.01
+--track3:回転,-360,360,0,0.01
+
+function clipfrm(x,y,zoom,rz)
+	-- 現在のオブジェクトの形にクリッピングした
+	-- フレームバッファをロードします。仮バッファ使用。
+
+	x	= x	or obj.x + obj.ox
+	y	= y	or obj.y + obj.oy
+	zoom	= zoom	or 1
+	rz	= rz	or obj.rz
+
+	-- オブジェクトをスクリーンサイズに合わせる
+	obj.setoption("drawtarget","tempbuffer",obj.screen_w,obj.screen_h)
+	obj.draw(x,y,0,zoom,1,0,0,rz)
+	obj.load("tempbuffer")
+
+	-- フレームバッファをオブジェクトにあわせてクリッピング
+	obj.copybuffer("tmp","frm")
+	obj.setoption("blend","alpha_sub")
+	obj.effect("反転","透明度反転",1)
+	obj.draw()
+	obj.setoption("blend",0)
+
+	obj.load("tempbuffer")
+	obj.rz = 0
+end
+clipfrm()
+
+obj.cx	= obj.x + obj.ox
+obj.cy	= obj.y + obj.oy
+
+obj.ox	= obj.ox	+ obj.track0
+obj.oy	= obj.oy	+ obj.track1
+obj.zoom= obj.zoom	* obj.track2*0.01
+obj.rz	= obj.rz	+ obj.track3
+
+
+
+--------------------------------------------------
+@エンボス
+--------------------------------------------------
+--track0:角度,-360,360,45
+--track1:距離,0,10,3
+--check0:単色化,1
+
+local math	= math
+local abs	= math.abs
+
+local r		= obj.track0*math.pi/180
+local l		= obj.track1
+local sin	= math.sin(r)*l
+local cos	= math.cos(r)*l
+local w,h	= obj.getpixel()
+local tbw,tbh	= w+abs(sin),h+abs(cos)
+local s
+if(tbw>tbh)then	s	= tbw
+else		s	= tbh
+end
+s		= math.ceil(s)
+
+if(obj.check0)then	obj.effect("単色化")	end
+obj.effect("領域拡張","塗りつぶし",1,
+	"上",l,	"下",l,	"左",l,	"右",l
+)
+
+obj.copybuffer("chace:org","obj")
+obj.setoption("drawtarget","tempbuffer",w,h)
+
+obj.draw(-cos/2,-sin/2)
+
+obj.copybuffer("obj","chace:org")
+obj.effect("反転","輝度反転",1,"色相反転",1)
+obj.setoption("blend",1)
+obj.draw(cos/2,sin/2)
+
+obj.load("figure","四角形",0x808080,s)
+obj.setoption("blend",2)
+obj.draw()
+obj.setoption("blend")
+
+obj.load("tempbuffer")
+
+
+
+--------------------------------------------------
+@擬似3D
+--------------------------------------------------
+--track0:角度,-360,360,135
+--track1:距離,0,1000,10
+--track2:縁取り,0,100,3,1
+
+--dialog:色1/col,col1=nil;色2/col,col2=nil;縁取り/col,col_edge=nil;彩度補間/chk,isHSV=0;先頭も塗りつぶす/chk,isFirst=1;縁取り ぼかし,edge_blur=10;輝度を保持する/chk,isLuminance=0;密度,density=1;
+
+
+local COLOR
+if(isHSV==0)then	COLOR	= RGB
+else			COLOR	= HSV end
+local r1,g1,b1, r2,g2,b2
+if(col1~=nil and col2~=nil)then
+	r1,g1,b1	= COLOR(col1)
+	r2,g2,b2	= COLOR(col2)
+end
+local function calc_color(col1,col2,t)
+	return COLOR(r1+(r2-r1)*t,g1+(g2-g1)*t,b1+(b2-b1)*t)
+end
+
+
+
+local math	= math
+local abs	= math.abs
+local draw	= obj.draw
+local effect	= obj.effect
+local copybuffer= obj.copybuffer
+
+local r		= obj.track0*math.pi/180
+local l		= obj.track1
+local edge_size	= obj.track2
+density	= density	or 1
+if(density<=0)then	density	= 1 end
+
+local sin,cos	= math.sin(r),math.cos(r)
+
+
+local n		= math.floor(l/density)
+local w,h	= obj.getpixel()
+local tsw,tsh	= w+abs(sin*l)+edge_size*2,	h+abs(cos*l)+edge_size*2
+local cx,cy	= tsw/2-w/2-edge_size,	tsh/2-h/2-edge_size
+if(sin<0)then	cx	= -cx end
+if(cos>0)then	cy	= -cy end
+
+
+copybuffer("cache:org","obj")
+
+obj.setoption("drawtarget","tempbuffer",tsw,tsh)
+
+
+for i=n,0,-1 do
+	local x	= -cx + sin* i*density
+	local y	= -cy - cos* i*density
+
+	if(0<i or (i<1 and isFirst==1))then
+		if	(col1~=nil and col2~=nil)then
+			effect("単色化","color",calc_color(col1,col2,i/n),"輝度を保持する",isLuminance)
+		elseif	(col1~=nil)then
+			copybuffer("obj","cache:org")
+			effect("単色化","color",col1,"強さ",(1-(i/n))*100,"輝度を保持する",isLuminance)
+		elseif	(col2~=nil)then
+			copybuffer("obj","cache:org")
+			effect("単色化","color",col2,"強さ",(  (i/n))*100,"輝度を保持する",isLuminance)
+		end
+	else		copybuffer("obj","cache:org")
+	end
+
+	if(i<1 and col_edge~=nil and edge_blur~=nil)then
+		effect("縁取り","color",col_edge,"サイズ",edge_size,"ぼかし",edge_blur)
+	end
+
+	draw(x,y)
+end
+
+
+obj.load("tempbuffer")
+obj.ox	= obj.ox+cx
+obj.oy	= obj.oy+cy
+
+
+
+--------------------------------------------------
+@部分グラデーション
+--------------------------------------------------
+--track0:中心X,-1000,1000,0
+--track1:中心Y,-1000,1000,0
+--track2:角度,-360,360,0
+--track3:幅,0,2000,100
+--dialog:強さ,grd_pow=100;合成モード,grd_blend=0;開始色/col,col_start=0xffffff;終了色/col,col_end=0x000000;開始 クリッピング/chk,isClipStart=1;終了 クリッピング/chk,isClipEnd=1;
+--check0:凸形,0
+
+
+
+local effect	= obj.effect
+local setoption	= obj.setoption
+local copybuffer= obj.copybuffer
+local draw	= obj.draw
+
+local w,h	= obj.getpixel()
+
+local cx	= obj.track0
+local cy	= obj.track1
+local rotate	= obj.track2
+local width	= obj.track3
+local grd_type	= 0
+local clipwidth	= width/2
+local bgclipw	= width
+local rot_rad	= rotate*math.pi/180
+
+if(obj.check0)then
+	grd_type	= 3
+	clipwidth	= width
+	bgclipw		= width*2
+end
+
+local isGrdNocolor1,isGrdNocolor2
+if(col_start)then	isGrdNocolor1	= 0
+else			isGrdNocolor1	= 1
+end
+if(col_end  )then	isGrdNocolor2	= 0
+else			isGrdNocolor2	= 1
+end
+
+col_start	= col_start	or 0
+col_end		= col_end	or 0
+grd_pow		= grd_pow	or 0
+
+clip_blur1	= clip_blur1	or 0
+clip_blur2	= clip_blur2	or 0
+
+
+local clipx	=  math.sin(rot_rad)*clipwidth
+local clipy	= -math.cos(rot_rad)*clipwidth
+
+
+-----
+
+setoption("drawtarget","tempbuffer",w,h)
+setoption("blend","alpha_add")
+
+-----
+
+copybuffer("cache:org","obj")
+if(isClipStart==1)then
+	effect("斜めクリッピング",
+		"中心X",	 clipx+cx,
+		"中心Y",	 clipy+cy,
+		"角度",		rotate,
+		"ぼかし",	clip_blur1
+	)
+	draw()
+end
+
+copybuffer("obj","cache:org")
+if(isClipEnd==1)then
+	effect("斜めクリッピング",
+		"中心X",	-clipx+cx,
+		"中心Y",	-clipy+cy,
+		"角度",		rotate-180,
+		"ぼかし",	clip_blur1
+	)
+	draw()
+end
+
+-----
+
+copybuffer("obj","cache:org")
+
+effect("グラデーション",
+	"強さ",		grd_pow,
+	"中心X",	cx,
+	"中心Y",	cy,
+	"角度",		rotate,
+	"幅",		width,
+	"blend",	grd_blend,
+	"type",		grd_type,
+	"color",	col_start,
+	"no_color",	isGrdNocolor1,
+	"color2",	col_end,
+	"no_color2",	isGrdNocolor2
+)
+
+if(isClipStart==1)then
+	effect("斜めクリッピング",
+		"中心X",	 clipx+cx,
+		"中心Y",	 clipy+cy,
+		"角度",		rotate-180,
+		"ぼかし",	clip_blur1
+	)
+end
+if(isClipEnd==1)then
+	effect("斜めクリッピング",
+		"中心X",	-clipx+cx,
+		"中心Y",	-clipy+cy,
+		"角度",		rotate,
+		"ぼかし",	clip_blur1
+	)
+end
+
+draw()
+
+-----
+
+obj.load("tempbuffer")
+
+
+
+--------------------------------------------------
+@ノイズ
+--------------------------------------------------
+--track0:強さ,0,100,100
+--track1:変化速度,0,10,0,1
+--track2:変化回数,0,120,0
+
+local floor	= math.floor
+local effect	= obj.effect
+local draw	= obj.draw
+local w,h	= obj.getpixel()
+local pow	= obj.track0/100
+local speed	=      (obj.track1)/10
+local seed	= floor(obj.track2*obj.time)
+local w	= w+w%2
+local h	= h+h%2
+
+local size	= w
+if(w<h)then	size	= h end
+
+obj.copybuffer("cache:org","obj")
+obj.setoption("drawtarget","tempbuffer",w,h)
+
+local ca_w	= 50	-- とりあえず適当に
+obj.load("figure","四角形",0xffffff,size+ca_w*2)
+
+obj.effect("ノイズ","type",3, "mode",1,	"変化速度",speed, "seed",seed)
+obj.effect("色ずれ","ずれ幅",ca_w)
+obj.draw()
+
+
+obj.copybuffer("obj","cache:org")
+obj.setoption("blend","alpha_sub")
+obj.effect("反転","透明度反転",1)
+obj.draw()
+
+obj.load("tempbuffer")
+
+obj.copybuffer("tmp","cache:org")
+obj.setoption("blend",0)
+obj.draw(0,0,0,1,pow)
+
+obj.load("tempbuffer")
+
+
+
+--------------------------------------------------
+@頂点指定モザイク
+--------------------------------------------------
+--track0:サイズ,1,200,12,1
+--check0:タイル風,0
+--dialog:座標,pos={-100,-100,100,-100,100,100,-100,100};
+
+local size	= obj.track0
+local tile
+
+if(obj.check0)then	tile	= 1
+else			tile	= 0
+end
+
+obj.setanchor("pos",4,"loop")
+
+local lleft	= math.sqrt((pos[1]-pos[7])^2+(pos[2]-pos[8])^2)
+local ltop	= math.sqrt((pos[3]-pos[1])^2+(pos[4]-pos[2])^2)
+local lright	= math.sqrt((pos[5]-pos[3])^2+(pos[6]-pos[4])^2)
+local lbottom	= math.sqrt((pos[7]-pos[5])^2+(pos[8]-pos[6])^2)
+
+local w,h	= obj.getpixel()
+local cw,ch	= w/2, h/2
+local dw,dh	= (lleft+lright)/2, (ltop+lbottom)/2
+local hw,hh	= dw/2, dh/2
+
+obj.copybuffer("cache:org","obj")
+
+-----
+
+obj.setoption("drawtarget","tempbuffer",dw,dh)
+obj.drawpoly(
+	-hw,-hh,0,  hw,-hh,0,  hw, hh,0, -hw, hh,0,
+	cw+pos[1],ch+pos[2], cw+pos[3],ch+pos[4], cw+pos[5],ch+pos[6], cw+pos[7],ch+pos[8]
+)
+obj.load("tempbuffer")
+
+obj.effect("モザイク","サイズ",size,"タイル風",tile)
+
+-----
+
+obj.copybuffer("tmp","cache:org")
+
+obj.drawpoly(
+	pos[1],pos[2],0,
+	pos[3],pos[4],0,
+	pos[5],pos[6],0,
+	pos[7],pos[8],0
+)
+
+obj.load("tempbuffer")
+
+
+
+--------------------------------------------------
+@AeroGrass風
+--------------------------------------------------
+--track0:ぼかし,0,100,5,1
+--track1:単色化,0,100,42
+--track2:境界,0,100,30,1
+--dialog:色/col,color=0x74b8fc;境界色1/col,e_col1=0xf3f8fc;境界色2/col,e_col2=0x262d34;
+
+local function range(r1, r2, v)
+	return math.max(r1, math.min(r2, v))
+end
+local function rot(x,y,r)
+	local rad = r/180*math.pi
+	local sin = math.sin(rad)
+	local cos = math.cos(rad)
+	return	x*cos-y*sin, x*sin+y*cos
+end
+
+local blur	= obj.track0
+local c_pow	= obj.track1
+local e_blur	= obj.track2
+
+local x		= obj.x + obj.ox + obj.cx
+local y		= obj.y + obj.oy + obj.cy
+local zoom	= obj.getvalue("zoom")/100
+local rz	= obj.rz
+local w,h	= obj.getpixel()
+x		= x/zoom
+y		= y/zoom
+local dfx,dfy	= rot(-x,-y,-rz)
+
+local function edge(col)
+	if(col~=nil)then
+		obj.effect("縁取り","サイズ",1,"ぼかし",e_blur,"color",col)
+	end
+end
+
+-----
+
+obj.copybuffer("cache:org","obj")
+
+obj.setoption("drawtarget","tempbuffer",w,h)
+
+obj.load("framebuffer")
+obj.effect("ぼかし","範囲",blur,"サイズ固定",1)
+obj.draw(dfx,dfy,0,1/zoom,1,0,0,-rz)
+
+obj.copybuffer("obj","cache:org")
+obj.setoption("blend","alpha_sub")
+obj.effect("反転","透明度反転",1)
+obj.draw()
+
+obj.load("tempbuffer")
+if(color~=nil)then
+	obj.effect("単色化","強さ",c_pow,"color",color,"輝度を保持する",0)
+end
+edge(e_col1)
+edge(e_col2)
+
+
+
+--------------------------------------------------
+@RGBストレート
+--------------------------------------------------
+function RGBStraight()
+	obj.copybuffer("tmp","obj")
+	obj.setoption("drawtarget","tempbuffer")
+	obj.setoption("blend","alpha_sub")
+	obj.draw()
+	obj.load("tempbuffer")
+	obj.effect("反転","透明度反転",1)
+end
+
+RGBStraight()
+
+
+
+--------------------------------------------------
+@領域内ぼかし
+--------------------------------------------------
+--track0:範囲,0,300,5,1
+
+function RGBStraight()
+	obj.copybuffer("tmp","obj")
+	obj.setoption("drawtarget","tempbuffer")
+	obj.setoption("blend","alpha_sub")
+	obj.draw()
+	obj.load("tempbuffer")
+	obj.effect("反転","透明度反転",1)
+end
+
+local blur	= obj.track0
+
+
+obj.setoption("drawtarget","tempbuffer")	-- いちおう
+obj.setoption("blend","alpha_sub")
+
+obj.copybuffer("cache:org","obj")
+
+obj.effect("ぼかし","範囲",blur,"サイズ固定",1)
+RGBStraight()
+obj.copybuffer("tmp","obj")
+
+obj.copybuffer("obj","cache:org")
+obj.draw()
+obj.load("tempbuffer")
+obj.effect("反転","透明度反転",1)
+
+
+
+--------------------------------------------------
+@領域内モザイク
+--------------------------------------------------
+--track0:サイズ,1,200,12,1
+
+function RGBStraight()
+	obj.copybuffer("tmp","obj")
+	obj.setoption("drawtarget","tempbuffer")
+	obj.setoption("blend","alpha_sub")
+	obj.draw()
+	obj.load("tempbuffer")
+	obj.effect("反転","透明度反転",1)
+end
+
+local size	= obj.track0
+
+
+obj.setoption("drawtarget","tempbuffer")	-- いちおう
+obj.setoption("blend","alpha_sub")
+
+obj.copybuffer("cache:org","obj")
+
+obj.effect("モザイク","サイズ",size)
+RGBStraight()
+obj.copybuffer("tmp","obj")
+
+obj.copybuffer("obj","cache:org")
+obj.draw()
+obj.load("tempbuffer")
+obj.effect("反転","透明度反転",1)
+
+
+
+--------------------------------------------------
+@斜線シャドー
+--------------------------------------------------
+--track0:X,-200,200,5,1
+--track1:Y,-200,200,5,1
+--track2:幅,1,200,3
+--track3:透明度,0,100,0
+--dialog:色/col,color=0x000000;角度,angle=45;空白調整,space=0;位相,phase=0;
+--check0:影を別オブジェクトで描画,0
+
+local function rot(x,y,rad)
+	local sin = math.sin(rad)
+	local cos = math.cos(rad)
+	return	x*cos-y*sin, x*sin+y*cos
+end
+
+local shadowX		= obj.track0
+local shadowY		= obj.track1
+local shadowWidth	= math.max(obj.track2, 1)
+local shadowAlpha	= 1-(obj.track3)/100
+
+local w,h	= obj.getpixel()
+local length	= (w*w + h*h)^0.5
+
+if(color==nil or color<0)then
+	return
+end
+
+angle		= (angle	or 0) * math.pi / 180
+space		= space		or 0
+phase		= phase		or 0
+
+local width	= shadowWidth*2 + space
+phase		= phase % width
+
+local ox,oy,oz	= obj.ox, obj.oy, obj.oz
+local cx,cy,cz	= obj.cx, obj.cy, obj.cz
+
+
+--------------------------------------------------
+-- 斜線背景
+
+obj.copybuffer("cache:org", "obj")
+obj.setoption("drawtarget", "tempbuffer", w, h)
+
+obj.load("figure", "四角形", color)
+local sx0,sy0	= rot( length/2, shadowWidth/2, angle)
+local sx1,sy1	= rot(-length/2, shadowWidth/2, angle)
+local svx	=-math.sin(angle)
+local svy	= math.cos(angle)
+
+local function drawshadowpoly(x, y)
+	obj.drawpoly(
+		x-sx0,y-sy0, 0,
+		x-sx1,y-sy1, 0,
+		x+sx0,y+sy0, 0,
+		x+sx1,y+sy1, 0,
+		0,0, 0,0, 0,0, 0,0, shadowAlpha
+	)
+end
+
+local sn	= math.ceil((length/2)/width)
+
+for i=0,sn-1 do
+	local p0	=  i*width+phase
+	local p1	= -i*width+phase
+	drawshadowpoly(p0*svx, p0*svy)
+	drawshadowpoly(p1*svx, p1*svy)
+end
+
+
+--------------------------------------------------
+-- 元図形の形にクリッピング
+
+obj.copybuffer("obj", "cache:org")
+obj.effect("反転", "透明度反転",1)
+obj.setoption("blend", "alpha_sub")
+obj.draw()
+obj.load("tempbuffer")
+
+
+--------------------------------------------------
+-- シャドーの体裁
+
+if(not obj.check0)then
+	-- 結合
+	local hx,hy	= shadowX/2, shadowY/2
+
+	obj.setoption("drawtarget", "tempbuffer", w+math.abs(shadowX), h+math.abs(shadowY))
+	obj.setoption("blend", 0)
+	obj.draw(hx,hy)
+	obj.copybuffer("obj", "cache:org")
+	obj.draw(-hx,-hy)
+	obj.load("tempbuffer")
+
+	ox,oy	= ox+hx, oy+hy
+
+else
+	-- 別オブジェクト
+
+	obj.setoption("drawtarget", "framebuffer")
+	obj.draw(shadowX, shadowY)
+	obj.copybuffer("obj", "cache:org")
+	obj.effect()
+	obj.draw()
+
+end
+
+obj.ox, obj.oy, obj.oz	= ox,oy,oz
+obj.cx, obj.cy, obj.cz	= cx,cy,cz
+
+
+
+--------------------------------------------------
+@反転斜めクリッピング
+--------------------------------------------------
+--track0:個数,1,16,2,1
+--track1:角度1,-360,360,0
+--track2:角度2,-360,360,90
+--track3:角度3,-360,360,0
+--dialog:直接指定/chk,isDialogSetting=0;中心座標,pos={0,0,0,0};角度,rot={0,90};ぼかし,blur={0,0};アンカー座標指定/chk,isAnchor=1;ランダム設定/chk,isRandom=0;
+
+local point_n	= obj.track0
+local posX, posY= {}, {}
+local rot_def	= 0
+local blur_def	= 0
+
+if(type(rot)~="table")then
+	if(type(rot)=="number")then
+		rot_def	= rot
+	end
+	rot	= {}
+end
+if(type(blur)~="table")then
+	if(type(blur)=="number")then
+		blur_def= blur
+	end
+	blur	= {}
+end
+
+if(isRandom==1)then
+	for i=1,point_n do
+		posX[i]	= obj.rand(-10000, 10000, i, 1000)*obj.screen_w/20000
+		posY[i]	= obj.rand(-10000, 10000, i, 2000)*obj.screen_h/20000
+		rot[i]	= obj.rand(-10000, 10000, i, 3000)*360/10000
+		blur[i]	= blur[i]	or blur_def
+	end
+elseif(isDialogSetting==0)then
+	point_n	= math.min(point_n, 3)
+	posX	= {0,0,0}
+	posY	= {0,0,0}
+	rot	= {obj.track1, obj.track2, obj.track3}
+	blur	= {blur_def, blur_def, blur_def}
+else
+	if(isAnchor==1)then
+		point_n	= obj.setanchor("pos", point_n, "line")
+	end
+	for i=1,point_n do
+		posX[i]	= pos[i*2-1]	or 0
+		posY[i]	= pos[i*2  ]	or 0
+		rot[i]	= rot[i]	or rot_def
+		blur[i]	= blur[i]	or blur_def
+	end
+end
+
+obj.copybuffer("tmp","obj")
+obj.setoption("drawtarget","tempbuffer")
+obj.setoption("blend","alpha_sub")
+
+-- マスク作成
+for i=1,point_n do
+	local blend	= 12	-- 差分
+	if(i==1)then	blend	= 0	end
+
+	obj.effect("グラデーション", "blend",blend, "color",0xffffff, "color2",0x000000,
+		"中心X",	posX[i],
+		"中心Y",	posY[i],
+		"角度",		rot[i],
+		"幅",		blur[i]
+	)
+
+end
+
+-- Y -> alpha
+obj.effect("ルミナンスキー", "type",1, "基準輝度",0, "ぼかし",4096)
+
+-- アルファ減算
+obj.draw()
+
+-- 読み込み
+obj.copybuffer("obj","tmp")
+
+
+
+--------------------------------------------------
+@滑らか縁取り
+--------------------------------------------------
+--track0:サイズ,0,500,16,1
+--track1:滑らかさ,0,300,16,1
+--track2:ぼかし,0,1024,128,1
+--color:0x000000
+--dialog_色/col,color=0x000000;境界基準,lkey_lum=2048;
+local lkey_lum=2048;
+
+local edge_size	= obj.track0
+local blur_range= obj.track1
+local lkey_blur	= obj.track2
+local w,h	= obj.getpixel()
+w,h		= w+edge_size*2, h+edge_size*2
+
+obj.copybuffer("cache:org","obj")
+obj.setoption("drawtarget","tempbuffer", w,h)
+
+-- 黒背景の準備
+obj.load("figure","四角形",0x000000, math.max(w,h))
+obj.draw()
+
+-- アルファマップの作成 
+obj.copybuffer("obj","cache:org")
+
+obj.effect("単色化",
+	"color",	0xffffff,
+	"輝度を保持する",	0
+)
+obj.effect("縁取り",
+	"color",	0xffffff,
+	"サイズ",	edge_size,
+	"ぼかし",	0
+)
+
+obj.effect("ぼかし", "範囲", blur_range)
+
+obj.draw()
+
+-- 輝度→アルファ
+obj.load("tempbuffer")
+
+obj.effect("ルミナンスキー",
+	"基準輝度",	lkey_lum,
+	"ぼかし",	lkey_blur,
+	"type",	0
+)
+
+---- 縁取り
+obj.setoption("blend",0)
+obj.effect("単色化", "color",color, "輝度を保持する",0)
+obj.copybuffer("tmp","obj")
+obj.copybuffer("obj","cache:org")
+obj.draw()
+
+obj.load("tempbuffer")
+
+
+
+
+
+--------------------------------------------------
+@Text 字間調整
+--------------------------------------------------
+--track0:字間X,-1000,1000,32
+--track1:字間Y,-1000,1000,0
+--track2:字間Z,-1000,1000,0
+
+
+h = obj.num / 2 -0.5
+
+if ( obj.index < h ) then
+ obj.ox = obj.ox -(( h - obj.index ) * obj.track0 )
+ obj.oy = obj.oy -(( h - obj.index ) * obj.track1 )
+ obj.oz = obj.oz -(( h - obj.index ) * obj.track2 )
+
+elseif ( obj.index > h ) then
+ obj.ox = obj.ox +(( obj.index - h ) * obj.track0 )
+ obj.oy = obj.oy +(( obj.index - h ) * obj.track1 )
+ obj.oz = obj.oz +(( obj.index - h ) * obj.track2 )
+
+end
+
+
+
+--------------------------------------------------
+@Text 背景
+--------------------------------------------------
+--track0:余白,0,100,4
+--track1:透明度,0,100,50
+--track2:基準位置,1,9,1,1
+--color:0x000000
+
+local padding	= obj.track0
+local alpha	= obj.track1*0.01
+local mode	= obj.track2-1
+local w,h	= obj.getpixel()
+local bw,bh	= w+padding*2,h+padding*2
+local m
+if(bw>bh)then	m = bw
+else		m = bh
+end
+
+local listx	= {-w/2,0,w/2}
+local listy	= {-h/2,0,h/2}
+
+local x		= listx[            mode%3 +1 ]
+local y		= listy[ math.floor(mode/3)+1 ]
+
+debug_print(string.format("mode[%d,%d]",mode%3 +1, math.floor(mode/3)+1))
+
+obj.copybuffer("cache:src","obj")
+obj.setoption("drawtarget","tempbuffer",bw,bh)
+obj.load("figure","四角形",color,m)
+obj.draw(0,0,0,1,alpha)
+
+obj.copybuffer("obj","cache:src")
+obj.draw()
+
+obj.load("tempbuffer")
+
+obj.cx	= listx[            mode%3 +1 ] + obj.cx
+obj.cy	= listy[ math.floor(mode/3)+1 ] + obj.cy
+
+
+
+--------------------------------------------------
+@Text グラデーション
+--------------------------------------------------
+--track0:中心Y,-100,100,3
+--track1:強さ,0,100,15
+--track2:縁取り,0,500,2,1
+--track3:濃さ,0,100,30
+--dialog:色調補正 明るさ,cola_lig=100;グラデーション 色/col,grd_col=0x000000;グラデーション 境界強さ,grd_bot=50;縁取り 色/col,edg_col=nil;縁取り ぼかし,edg_blur=5;拡散光/chk,difl_chk=0;拡散光 強さ,difl_pow=35;拡散光 拡散,difl_dif=8;シャドー/chk,sdw_chk=1;シャドー 中心X,sdw_x=8;シャドー 中心Y,sdw_y=nil;シャドー 拡散,sdw_dif=10;
+
+
+
+w,h	= obj.getpixel()
+hw	= w/2
+hh	= h/2
+
+ox	= obj.ox
+oy	= obj.oy
+
+cy	= obj.track0*h*0.005
+grd_pow	= obj.track1
+edg_size= obj.track2
+sdw_dep = obj.track3
+
+obj.setoption("drawtarget","tempbuffer",obj.w,obj.h)
+
+
+
+----- 色調補正
+if (cola_lig~=100)then
+	obj.effect("色調補正", "明るさ",cola_lig)
+end
+
+
+----- グラデーション
+
+col = grd_col
+
+if (col>=0)then
+	v0 = h-(hh-cy)
+
+	if (grd_bot==nil)then
+		grd_bot = grd_pow
+	end
+
+
+	obj.effect( "グラデーション",
+		"強さ",	grd_pow,
+		"幅",	obj.h/2,
+		"type",	3,
+
+		"中心Y",	cy,
+
+		"color",	col,
+		"no_color2",	1
+	)
+	obj.draw()
+
+	obj.effect("グラデーション",
+		"強さ",	grd_bot,
+		"幅",	hh-cy,
+		"中心Y",	cy,
+
+		"color",	col,
+		"no_color2",	1
+	)
+
+	obj.drawpoly(
+		-hw,	cy,	0,
+		 hw,	cy,	0,
+		 hw,	hh,	0,
+		-hw,	hh,	0,
+		0,v0,	w,v0,	w,h,	0,h
+	)
+end
+
+
+obj.load("tempbuffer")
+
+obj.ox = ox
+obj.oy = oy
+
+
+----- 縁取り
+col = edg_col
+
+if (col~=nil and col>=0)then
+	obj.effect("縁取り", "color",col, "サイズ",edg_size, "ぼかし",edg_blur)
+end
+
+
+----- 拡散光
+if (difl_chk==1)then
+	obj.effect("拡散光", "強さ",difl_pow, "拡散",difl_dif )
+end
+
+----- シャドー
+
+if (sdw_chk==1)then
+	if (sdw_y==nil)then
+		sdw_y = sdw_x
+	end
+	sdw_dif = math.max(0,sdw_dif)
+
+	obj.effect("シャドー", "X",sdw_x, "Y",sdw_y, "濃さ",sdw_dep, "拡散",sdw_dif)
+end
+
+
+
+--------------------------------------------------
+@Text 擦りガラス風
+--------------------------------------------------
+--track0:強さ,0,100,70
+--track1:境界,0,100,5,1
+--track2:ぼかし,0,100,5,1
+
+-- 正直自分でも何してるのかよくわからなくなってる
+
+local function clipfrm(x,y,zoom,rz)
+	obj.setoption("drawtarget","tempbuffer",obj.screen_w,obj.screen_h)
+	obj.draw(x,y,0,zoom,1,0,0,rz)
+	obj.load("tempbuffer")
+	obj.copybuffer("cache:clip","obj")
+
+	obj.setoption("drawtarget","tempbuffer",obj.screen_w,obj.screen_h)
+	obj.load("framebuffer")
+	obj.draw(obj.cx,obj.cy,0,zoom)
+
+	obj.copybuffer("obj","cache:clip")
+	obj.setoption("blend","alpha_sub")
+	obj.effect("反転","透明度反転",1)
+	obj.draw()
+
+	obj.load("tempbuffer")
+end
+
+local alpha	= obj.track0*0.01
+local edge	= obj.track1
+local blur	= obj.track2
+local x		= obj.x + obj.ox
+local y		= obj.y + obj.oy
+local zoom	= obj.zoom
+local rz	= obj.rz
+local w,h	= obj.getpixel()
+
+local rad	= rz*math.pi/180
+local sin	= math.sin(rad)
+local cos	= math.cos(rad)
+local rrx	=  cos*x+sin*y
+local rry	= -sin*x+cos*y
+
+obj.copybuffer("cache:obj","obj")
+clipfrm(x,y,zoom,rz)
+
+obj.effect("境界ぼかし","範囲",edge, "透明度の境界をぼかす",1)
+obj.effect("ぼかし",	"範囲",blur)
+local w,h	= obj.getpixel()
+
+--obj.setoption("drawtarget","tempbuffer",w,h)
+obj.copybuffer("tmp","cache:obj")
+
+obj.setoption("blend",0)
+obj.draw(-rrx,-rry,0,zoom,alpha,0,0,-rz)
+
+obj.load("tempbuffer")
+
+
+
+

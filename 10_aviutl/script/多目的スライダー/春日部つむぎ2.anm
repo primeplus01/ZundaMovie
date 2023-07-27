@@ -1,0 +1,18 @@
+--track0:!左腕,0,3,0,1
+--track1:!右腕,0,5,0,1
+
+local values = {
+  "v1.!左腕/*基本",
+  "v1.!左腕/*口元",
+  "v1.!左腕/*ピース",
+}
+PSD:addstate(values, obj.track0)
+
+local values = {
+  "v1.!右腕/*基本",
+  "v1.!右腕/*口元",
+  "v1.!右腕/*ピース",
+  "v1.!右腕/挿入されたイメージ",
+  "v1.!右腕/*ゆびさし"
+}
+PSD:addstate(values, obj.track1)

@@ -1,0 +1,128 @@
+@ƒeƒƒbƒv
+--track0:˜g•,0,500,100,0.1
+--track1:˜g‚‚³,0,500,100,0.1
+--track2:XˆÚ“®‘¬“x,-100,100,5,0.1
+--track3:YˆÚ“®‘¬“x,-100,100,0,0.1
+--dialog:“r’†’â~[•b],local stop=0;Šî€ˆÊ’uX[%],local x_default=100;Šî€ˆÊ’uY[%],local y_default=100;À•W,pos={};
+
+--•Ï”----------------------------------
+local x_start,y_start,windowX,windowY,move,x,y,xpos,ypos
+objzoom	=obj.getvalue("zoom")
+x_start	=obj.w/objzoom*50*x_default/100
+y_start	=obj.h/objzoom*50*y_default/100
+
+if(pos[1]==nil)then	--‰½‚àw’è‚³‚ê‚Ä‚¢‚È‚¢‚Ìˆ—
+	pos[1],pos[2]=-x_start,y_start
+end
+obj.setanchor("pos",1,"line")
+
+xpos	=pos[1]+x_start
+ypos	=pos[2]-y_start
+windowX	=obj.w*(obj.track0/100)
+windowY	=obj.h*(obj.track1/100)
+
+--“r’†’â~------------------------------
+if(stop==0)then
+	move	=obj.frame
+elseif(stop<=obj.time)then
+	move	=stop*obj.framerate
+else
+	move	=obj.frame
+end
+--“®‚©‚·ˆ—------------------------------
+x	=xpos-move*obj.track2
+y	=ypos+move*obj.track3
+
+obj.setoption("drawtarget","tempbuffer",windowX,windowY)
+obj.draw(x,y,0)
+obj.load("tempbuffer")
+
+
+@—§“ü‹Ö~˜g
+--track0:˜g[c]%,0,500,150,0,1
+--track1:˜g[‰¡]%,0,500,150,0,1
+--track2:×²İˆÊ’u,0,500,120,0.1
+--track3:×²İ•,0,100,5,1
+--dialog:”wŒiF/col,local col1=0xffff00;ƒ‰ƒCƒ“F/col,local col2=0x000000;
+obj.effect()
+
+obj.copybuffer("tmp","obj")
+local h_rate	=obj.track0/100
+local w_rate	=obj.track1/100
+local l_rate	=obj.track2/100
+local ls	=obj.track3	--linesize
+local w		=obj.w/2*w_rate
+local h		=obj.h/2*h_rate
+local line	=obj.h/2*l_rate
+
+--¡”wŒi˜g-------------------------------
+obj.load("figure","lŠpŒ`",col1,100)
+obj.effect()
+obj.drawpoly(
+-w,-h,0,
+w,-h,0,
+w,h,0,
+-w,h,0
+)
+--¡ã‚Ìƒ‰ƒCƒ“---------------------------
+obj.load("figure","lŠpŒ`",col2,100)
+obj.effect()
+obj.drawpoly(
+-w,-line-ls,0,
+w,-line-ls,0,
+w,-line,0,
+-w,-line,0
+)
+--¡‰º‚Ìƒ‰ƒCƒ“---------------------------
+obj.load("figure","lŠpŒ`",col2,100)
+obj.effect()
+obj.drawpoly(
+-w,line,0,
+w,line,0,
+w,line+ls,0,
+-w,line+ls,0
+)
+--¡•`‰æ---------------------------
+obj.load("tempbuffer")
+obj.draw()
+
+
+@‘äŒ˜g‡¬
+--track0:XˆÊ’u,-100,100,-5,0.1
+--track1:YˆÊ’u,-100,100,-5,0.1
+--track2:•,-500,500,100,0.1
+--track3:‚‚³,-500,500,100,0.1
+--check0:˜g‚ÉŒø‰Ê‚ğ“K—p,0
+--file:
+
+--œ•Ï”----------------------------------------
+local	ox,oy,bw,bh,aw,ah,ww,hh
+ox	=obj.track0/100*obj.screen_w
+oy	=obj.track1/100*obj.screen_h
+ww	=obj.w
+hh	=obj.h
+
+--œ‘äŒ˜g‰æ‘œ‚ÌŒÄ‚Ño‚µ------------------------
+obj.copybuffer("tmp","obj")
+obj.load(file)
+aw	=obj.track2/100*obj.w	--‘äŒ˜g‚Ì•
+ah	=obj.track3/100*obj.h	--‘äŒ˜g‚Ì‚‚³
+
+if(obj.check0)then
+obj.effect()
+end
+
+	--¥©“®’²®‚µ‚È‚¢ê‡-----------------
+	obj.drawpoly(
+	ox	,oy	,0,
+	aw+ox	,oy	,0,
+	aw+ox	,ah+oy	,0,
+	ox	,ah+oy	,0)
+
+	obj.load("tempbuffer")
+	obj.effect()
+	obj.drawpoly(
+	0	,0	,0,
+	ww	,0	,0,
+	ww	,hh	,0,
+	0	,hh	,0)

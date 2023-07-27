@@ -1,0 +1,15 @@
+--track0:表情記号,0,2,0,1
+--track1:!顔色,0,3,0,1
+
+local values = {
+  "v1.%xQ情記号/なみだめ",
+  "v1.%xQ情記号/汗",
+}
+PSD:addstate(values, obj.track0)
+
+local values = {
+  "v1.!顔色/ほっぺ赤め",
+  "v1.!顔色/ほっぺ",
+  "v1.!顔色/かげり",
+}
+PSD:addstate(values, obj.track1)

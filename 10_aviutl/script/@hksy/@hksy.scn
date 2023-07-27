@@ -1,0 +1,136 @@
+------------------------------------------------------------
+@ブラインド
+------------------------------------------------------------
+--track0:分割,1,100,10,1
+--check0:縦方向,0
+
+local slice	= obj.track0
+local w,h	= obj.getpixel()
+local dw	= w / slice
+local dh	= h / slice
+
+local xpos	= w/2
+local ypos	= h/2
+
+local time	= obj.getvalue("scenechange")
+
+local xh = dw*time
+local yh = dh*time
+
+obj.setoption("drawtarget","tempbuffer",w,h)
+
+local x0,x1,x2,x3, y0,y1,y2,y3, u0,u1,u2,u3, v0,v1,v2,v3
+if(not obj.check0)then
+	x0	= -xpos
+	x1	=  xpos
+	x2	=  x1
+	x3	=  x0
+	u0	= 0
+	u1	= w
+	u2	= w
+	u3	= 0
+else
+	y0	= -ypos
+	y1	=  y0
+	y2	=  ypos
+	y3	=  y2
+	v0	= 0
+	v1	= 0
+	v2	= h
+	v3	= h
+end
+
+for i=0,slice-1 do
+	if(not obj.check0)then
+		y0	= -ypos+dh*i+yh
+		y1	=  y0
+		y2	=  y0-yh+dh
+		y3	=  y2
+		v0	=  dh*i+yh
+		v1	=  v0
+		v2	=  v0-yh+dh
+		v3	=  v2
+	else
+		x0	= -xpos+dw*i+xh
+		x1	=  x0-xh+dw
+		x2	=  x1
+		x3	=  x0
+		u0	=  dw*i+xh
+		u1	=  u0-xh+dw
+		u2	=  u1
+		u3	=  u0
+	end
+
+	obj.drawpoly(
+		x0,y0,0,	x1,y1,0,	x2,y2,0,	x3,y3,0,
+		u0,v0,		u1,v1,		u2,v2,		u3,v3
+	)
+end
+obj.load("tempbuffer")
+obj.setoption("drawtarget","framebuffer")
+obj.draw()
+
+
+
+------------------------------------------------------------
+@ワイプ（方向）
+------------------------------------------------------------
+--track0:角度,-360,360,240
+--track1:幅,0,1000,100
+
+local math	= math
+
+local r		= obj.track0
+local w		= obj.track1
+
+local time	= (obj.getvalue("scenechange")-0.5)*2	-- time : -1 -> +1
+local t		= math.sqrt(obj.screen_w^2+obj.screen_h^2) *time
+
+local rad	= r*math.pi/180
+local x		=  math.sin(rad) *t
+local y		= -math.cos(rad) *t
+
+obj.effect("斜めクリッピング",
+	"中心X",	x,	"中心Y",	y,
+	"角度",		r,	"ぼかし",	w
+)
+
+obj.draw()
+
+
+
+------------------------------------------------------------
+@輝度ワイプ（方向）
+------------------------------------------------------------
+--track0:角度,-360,360,240
+--track1:幅,0,1000,100
+--dialog:強さ,pow=50;
+
+local math	= math
+
+local r		= obj.track0
+local w		= obj.track1
+pow		= pow	or 0
+
+local l		= math.sqrt(obj.screen_w^2+obj.screen_h^2)
+local yc	= (4096+w)*obj.getvalue("scenechange")
+
+obj.copybuffer("tmp","obj")
+obj.setoption("drawtarget","tempbuffer")
+obj.setoption("blend","alpha_sub")
+
+obj.effect("単色化")
+obj.effect("グラデーション", "強さ",pow, "角度",r, "幅",l)
+obj.effect("ルミナンスキー", "type",1 ,"基準輝度",yc, "ぼかし",w)
+
+obj.draw()
+
+
+
+obj.load("tempbuffer")
+obj.setoption("drawtarget","framebuffer")
+obj.draw()
+
+
+
+

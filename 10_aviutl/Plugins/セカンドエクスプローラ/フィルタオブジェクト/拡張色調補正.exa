@@ -1,0 +1,22 @@
+[v]
+length=501
+[v.0]
+_name=拡張色調補正
+Y(offs)=0
+Y(gain)=0
+Cb(offs)=0
+Cb(gain)=0
+Cr(offs)=0
+Cr(gain)=0
+R(offs)=0
+R(gain)=0
+R(gamm)=0
+G(offs)=0
+G(gain)=0
+G(gamm)=0
+B(offs)=0
+B(gain)=0
+B(gamm)=0
+RGBの同期=0
+TV -> PC スケール補正=0
+PC -> TV スケール補正=0

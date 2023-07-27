@@ -1,0 +1,1218 @@
+------------------------------------------------------------
+@連番画像読み込み
+------------------------------------------------------------
+--track0:再生速度,0,1000,100
+--track1:開始位置,0,10000,0,1
+--file:
+
+-- 1. string	file
+-- 2. int	num
+-- SerialNumber("C:\\hoge\\xxx_0123.bmp",1729)
+-- 	-> "C:\\hoge\\xxx_1729.bmp"
+function SerialNumber(file,num)
+	local function getdigit(str,i)
+		local tnum	= tonumber
+		local sub	= string.sub
+		local digit	= 0
+
+		while(tnum( sub(str,i,i) ))do
+			digit	= digit+1
+			i	= i+1
+		end
+		return digit
+	end
+
+	local string	= string
+	local reverse	= string.reverse
+	local find	= string.find
+	local sub	= string.sub
+	local format	= string.format
+	local len	= string.len
+
+	local rev	= reverse(file)				-- 探しやすいように反転
+	local ext_long	= find(rev,".",1,true)-1		-- 拡張子の長さ
+	local dig	= getdigit(rev,ext_long+2)		-- 桁の取得
+	local long	= len(file) - dig - ext_long-1		-- パスの長さ( - 桁数 - 拡張子 )
+	local path	= sub(file,  1, long)			-- パス抽出
+	local ext	= sub(file, -ext_long)			-- 拡張子抽出
+
+	return format("%s%0" ..dig.. "d.%s", path,num,ext)	-- 結合
+end
+
+local frame	= obj.time * obj.framerate			-- obj.frameを使わないフレーム数取得
+local num	= frame * ( obj.track0 * 0.01 ) +obj.track1	-- ロードする番号
+local file	= SerialNumber(file,num)
+obj.load("image", file)
+
+
+
+------------------------------------------------------------
+@直線
+------------------------------------------------------------
+--track0:Xサイズ,0,2048,100
+--track1:Yサイズ,0,2048,100
+--track2:中心位置,-100,100,0
+
+--dialog:色/col,color="0xfffffff";破線サイズ,DashSize=0;破線間隔,DashSpace=0;移動速度,DashSpeed=10;
+
+local sizeX	= obj.track0
+local sizeY	= obj.track1
+local cx	= obj.track2
+local hw	= sizeX*0.5
+local hh	= sizeY*0.5
+
+
+if (sizeX*sizeY==0) then
+	return
+end
+
+
+obj.setoption("drawtarget","tempbuffer",sizeX,sizeY)
+
+obj.load("figure", "四角形", color )
+
+if (DashSize*DashSpace==0) then	-- 直線
+	obj.drawpoly(-hw, -hh, 0,  hw, -hh, 0,  hw,  hh, 0, -hw,  hh, 0)
+
+else				-- 破線
+	local l	= DashSize+DashSpace
+	local x	= (obj.time * DashSpeed) % l
+	local d	= -hw-l+x
+
+	repeat
+		local x0	= d
+		local x1	= x0 + DashSize
+
+		obj.drawpoly(x0,-hh,0, x1,-hh,0, x1, hh,0, x0, hh,0)
+
+		d = x0 + l
+	until d>hw
+end
+
+obj.load("tempbuffer")
+obj.ox	= cx*0.01 * hw
+
+
+
+------------------------------------------------------------
+@チェッカー
+------------------------------------------------------------
+--track0:サイズ,1,256,32
+--track1:X回数,1,256,8,1
+--track2:Y回数,1,256,8,1
+--track3:描画方法,0,1,1,1
+--dialog:色1/col,color1=0xffffff;色2/col,color2=0x000000;X間隔,spacex=0;Y間隔,spacey=0;
+
+-----
+local colt	= {color1,color2}
+
+hs = obj.track0/2	-- 半分のサイズ
+size  = obj.track0
+loopx = math.floor(obj.track1)
+loopy = math.floor(obj.track2)
+
+sx = ((-loopx+1)*obj.track0 - spacex*(loopx-1))/2
+sy = ((-loopy+1)*obj.track0 - spacey*(loopy-1))/2
+
+mode = math.floor(obj.track3)
+
+if (mode == 1 ) then
+  obj.setoption("drawtarget","tempbuffer",size*loopx,size*loopy)
+end
+
+---
+local draw	= obj.draw
+
+for l=0,1 do
+  if colt[l+1] then
+    obj.load("figure","四角形",colt[l+1],size)
+    obj.effect()
+
+    for i=0,loopy-1 do
+      local y = sy + (size+spacey) * i
+      for j=(l+i)%2,loopx-1,2 do		-- ステップ数を2にしてif文を削る
+        local x = sx + (size+spacex) * j
+        draw(x,y)
+      end
+    end
+
+  end
+end
+
+if (mode == 1 ) then
+  obj.load("tempbuffer")
+end
+
+
+
+------------------------------------------------------------
+@チェッカー 複数色版
+------------------------------------------------------------
+--track0:サイズ,1,256,32
+--track1:X回数,1,256,8,1
+--track2:Y回数,1,256,8,1
+--dialog:図形名/fig,name="四角形";X間隔,spacex=0;Y間隔,spacey=0;色1,color1=0xffffff;色2,color2=0xbfeafb;色3,color3=0x7fd6f7;色4,color4=0x3fc2f3;色5,color5=0x00aeef;使用色数,use=5;開始色,start=math.floor(obj.time)%use;
+
+-----
+color = { color1, color2, color3, color4, color5 }
+
+local size  = obj.track0
+local loopx = obj.track1
+local loopy = obj.track2
+
+w = size * loopx + spacex * (loopx-1)
+h = size * loopy + spacey * (loopy-1)
+obj.setoption("drawtarget","tempbuffer", w,h)
+obj.setoption("blend","alpha_add")
+
+
+hs = size/2	-- 四隅の座標になる
+sx = ((-loopx+1)*size - spacex*(loopx-1))/2
+sy = ((-loopy+1)*size - spacey*(loopy-1))/2
+
+
+---
+local draw	= obj.draw
+
+for l=0,use-1 do	-- 0のほうがよさそう
+  if color[l+1] then
+    obj.load( "figure", name, color[l+1], size )
+
+    for i=0,loopy-1 do
+      y = sy + (size+spacey) * i
+      for j=(l+i+start)%use,loopx-1,use do	-- ステップ数を変更してif文を削る
+        x = sx + (size+spacex) * j
+        draw(x,y)
+      end
+    end
+  end
+
+end
+
+obj.load("tempbuffer")
+
+
+
+------------------------------------------------------------
+@菱形
+------------------------------------------------------------
+--track0:Xサイズ,0,1000,100
+--track1:Yサイズ,0,1000,100
+--track2:ライン幅,0,1000,1000
+--color:0xffffff
+
+bufx = obj.track0
+bufy = obj.track1
+
+obj.setoption( "drawtarget", "tempbuffer", bufx, bufy )
+obj.setoption("blend","alpha_add")
+
+obj.load("figure","四角形",color)
+long = math.max( obj.track0, obj.track1 )
+linex = obj.track0/long * obj.track2
+liney = obj.track1/long * obj.track2
+
+x0 = obj.track0/2
+x1 = math.max( x0-linex, 0 )
+y0 = obj.track1/2
+y1 = math.max( y0-liney, 0 )
+
+obj.drawpoly(  0, -y0, 0,	-x0,   0, 0,	-x1,   0, 0,	  0, -y1, 0 )	-- 左上
+obj.drawpoly(  0, -y0, 0,	 x0,   0, 0,	 x1,   0, 0,	  0, -y1, 0 )	-- 右上
+obj.drawpoly(  0,  y0, 0,	-x0,   0, 0,	-x1,   0, 0,	  0,  y1, 0 )	-- 左下
+obj.drawpoly(  0,  y0, 0,	 x0,   0, 0,	 x1,   0, 0,	  0,  y1, 0 )	-- 右下
+
+
+obj.load("tempbuffer")
+
+
+
+------------------------------------------------------------
+@角丸四角形
+------------------------------------------------------------
+--track0:Xサイズ,0,1000,100
+--track1:Yサイズ,0,1000,100
+--track2:ライン幅,0,1000,1000
+--track3:角サイズ,1,1000,16
+--color:0xffffff
+
+--obj.setoption("antialias",0)
+obj.setoption("blend","alpha_add")
+obj.setoption("drawtarget","tempbuffer", obj.track0, obj.track1 )
+
+
+if (obj.track0<obj.track3) or (obj.track1<obj.track3) then
+  size = math.min(obj.track0,obj.track1)
+else
+  size = obj.track3
+end
+
+obj.load("figure","円",color,size,obj.track2)
+
+x0 = obj.track0/2
+x1 = x0 - size/2
+y0 = obj.track1/2
+y1 = y0 - size/2
+
+-- vも一緒なので省略
+u0 = 0
+u1 = size/2
+u2 = size
+
+
+-- 角
+  -- 左上
+obj.drawpoly(
+  -x0, -y0, 0,	-x1, -y0, 0,  -x1, -y1, 0,	-x0, -y1, 0,
+  u0,u0, u1,u0, u1,u1, u0,u1 )
+
+  -- 右上
+obj.drawpoly(
+   x1, -y0, 0,	 x0, -y0, 0,   x0, -y1, 0,	 x1, -y1, 0,
+  u1,u0, u2,u0, u2,u1, u1,u1 )
+
+  -- 左下
+obj.drawpoly(
+  -x0,  y1, 0,	-x1,  y1, 0,  -x1,  y0, 0,	-x0,  y0, 0,
+  u0,u1, u1,u1, u1,u2, u0,u2 )
+
+  -- 右下
+obj.drawpoly(
+   x1,  y1, 0,	 x0,  y1, 0,   x0,  y0, 0,	 x1,  y0, 0,
+  u1,u1, u2,u1, u2,u2, u1,u2 )
+
+-- 四角
+  -- 横
+obj.load("figure","円",color,obj.track0,obj.track2)	-- 角と差が出ないように読み直し
+u0 = 0
+u1 = obj.w/2
+u2 = obj.w
+obj.drawpoly(
+  -x0, -y1, 0,	 x0, -y1, 0,   x0,  y1, 0,	-x0,  y1, 0,
+  u0,u1, u2,u1, u2,u1, u0,u1 )
+
+  -- 縦
+obj.load("figure","円",color,obj.track1,obj.track2)
+u0 = 0
+u1 = obj.h/2
+u2 = obj.h
+
+obj.drawpoly(
+  -x1, -y0, 0,	 x1, -y0, 0,   x1,  y0, 0,	-x1,  y0, 0,
+  u1,u0, u1,u0, u1,u2, u1,u2 )
+
+
+obj.load("tempbuffer")
+obj.setoption("dst","frm")
+
+
+
+------------------------------------------------------------
+@アクアボタン
+------------------------------------------------------------
+--track0:サイズ,0,1000,128,1
+--track1:ｺﾝﾄﾗｽﾄ,0,100,75,1
+--track2:光源Y,0,65,10
+
+--dialog:色/col,color=0x00aeef;形/fig,figure="円";光ぼかし,light_b=1;縁サイズ,edge_s=3;縁ぼかし,edge_b=10;
+
+size = obj.track0
+cont = size*(1-(obj.track1/100))
+lmy  = -(((obj.track2+25)/100)*size)
+w = size+(edge_s*2)	-- 円なので高さも一緒
+
+obj.setoption("drawtarget","tempbuffer", w,w )
+
+--
+
+obj.load("figure",figure,color,size)
+
+obj.effect("グラデーション", 
+	"color",	color,
+	"color2",	0xffffff,
+	"幅",		size,
+	"中心Y",	cont
+)
+obj.effect("グラデーション",
+	"blend",	3,
+	"強さ",		50,
+	"color",	0x000000,
+	"color2",	0xffffff,
+	"幅",		size,
+	"中心Y",	-cont
+)
+obj.effect("縁取り",
+	"サイズ",	edge_s,
+	"ぼかし",	edge_b,
+	"color",	color
+)
+obj.draw()
+
+-- 上のライト？みたいな
+obj.load("figure",figure, 0xffffff, size )
+obj.setoption("blend",4)
+
+obj.effect("グラデーション",
+	"color",	0xffffff,
+	"color2",	0x000000,
+	"幅",		size*3/4,	-- 魔法の数字
+	"中心Y",	-size/4		-- 魔法の数字
+)
+obj.effect("マスク",
+	"type",		1,
+	"サイズ",	size*1.5,	-- 魔法の数字
+	"縦横比",	-50,
+	"Y",		lmy,
+	"ぼかし",	light_b
+)
+
+
+
+obj.draw()
+
+obj.load("tempbuffer")
+obj.setoption("blend",0)
+obj.setoption("dst","frm")
+
+
+
+------------------------------------------------------------
+@雷
+------------------------------------------------------------
+--track0:太さ,0,100,2
+--track1:枝分かれ,0,100,40,1
+--track2:分割数,1,500,10,1
+--track3:変化速度,0,100,30,1
+--dialog:色/col,color=0xffffff;座標,pos={-128,0,128,0};変化率,var=60;枝拡散角度,diff=30;枝減衰,decay=20;発光 色/col,color_lig=0x0000ff;発光 強さ,pow_lig=150;発光 拡散,dif_lig=10;末端を尖らせる/chk,line_end=1;
+
+function drawnode(r,l,sx,ex,sy,ey,tip,pos1,pos2)
+-- 元々for中にあったものを無理矢理関数化したため、
+-- あまり実用的とはいえない。このスクリプト専用です。
+
+-- 1. r		：角度
+-- 2. l		：線の太さ
+-- 3. sx	：開始地点X
+-- 4. ex	：終了地点X
+-- 5. sy	：開始地点Y
+-- 6. ey	：終了地点Y
+-- 7. tip	：先端を尖らせるか
+-- 8. pos1	：尖らせる場合のX座標
+-- 9. pos2	：尖らせる場合のY座標
+
+	x0 =  math.sin(r*math.pi/180)*l + sx
+	x1 =  math.sin(r*math.pi/180)*l + ex
+	x2 = -math.sin(r*math.pi/180)*l + ex
+	x3 = -math.sin(r*math.pi/180)*l + sx
+
+	y0 = -math.cos(r*math.pi/180)*l + sy
+	y1 = -math.cos(r*math.pi/180)*l + ey
+	y2 =  math.cos(r*math.pi/180)*l + ey
+	y3 =  math.cos(r*math.pi/180)*l + sy
+
+	-- 末端を小さく
+	if tip then
+		x1 = pos1
+		x2 = pos1
+		y1 = pos2
+		y2 = pos2
+	end
+
+	obj.drawpoly(
+		x0, y0, 0,
+		x1, y1, 0,
+		x2, y2, 0,
+		x3, y3, 0,
+		u0,u0, u1,u0, u1,u1, u0,u1
+	)
+
+end
+
+-----
+
+l     = obj.track0/2
+split = obj.track2
+time  = math.floor(obj.track3*obj.time)
+
+obj.setanchor("pos",2,"line")
+long_x = pos[3]-pos[1]
+long_y = pos[4]-pos[2]
+w = long_x/split
+h = long_y/split
+r = math.atan2(long_y,long_x)/math.pi*180
+
+var   = var/100
+diff  = diff/2
+decay = math.max( decay, 1 )
+
+-----
+
+-- 仮バッファサイズ計算
+obj.setoption("drawtarget","tempbuffer",
+	math.abs(long_x)+(var*diff/split)*50 + math.abs(long_y/10),
+	math.abs(long_y)+(var*diff/split)*50 + math.abs(long_x/10)
+)
+obj.setoption("blend","alpha_add")
+
+-- 値のバックアップ
+pos1 = pos[1]
+pos2 = pos[2]
+
+-- 中心に来るように調整
+hw = long_x/2
+hh = long_y/2
+
+pos[1] = -hw
+pos[2] = -hh
+pos[3] = hw
+pos[4] = hh
+
+-----
+
+obj.load("figure","四角形",color)
+
+u0 = 0
+u1 = obj.w
+
+-----
+
+for i=0,split-1 do
+
+	sx = pos[1] + (i+0)*w + obj.rand( -h*var, h*var, time     , i   )
+	ex = pos[1] + (i+1)*w + obj.rand( -h*var, h*var, time     , i+1 )
+	lx = ex-sx
+
+	sy = pos[2] + (i+0)*h + obj.rand( -w*var, w*var, time+1000, i   )
+	ey = pos[2] + (i+1)*h + obj.rand( -w*var, w*var, time+1000, i+1 )
+
+	-- 基本
+	drawnode( r,l, sx,ex, sy,ey, (line_end==1) and (i==split-1),pos[3],pos[4] )
+
+
+	-- 枝
+	est = obj.rand(0,100, time,i+2000)
+	if est<obj.track1 then
+		posx = 0
+		poxy = 0
+
+		while (est>=0) do
+			ex = sx + obj.rand( -diff,diff, time, i+4000+est )
+			ey = sy + obj.rand( -diff,diff, time, i+5000+est )
+
+			cmpn = (line_end==1) and (est<=decay)
+
+			drawnode( r,l, sx,ex, sy,ey, cmpn, ex,ey )
+
+			est = est-decay
+
+			sx = ex
+			sy = ey
+		end
+	end
+
+end
+
+
+
+obj.load("tempbuffer")
+obj.setoption("dst","frm")
+
+obj.ox = pos1 + hw
+obj.oy = pos2 + hh
+
+
+obj.effect("発光",
+	"color",	color_lig,
+	"強さ",		pow_lig,
+	"拡散",		dif_lig,
+	"しきい値",	40,
+	"no_color",	0
+)
+
+
+
+------------------------------------------------------------
+@4:3端埋め（16:9専用）
+------------------------------------------------------------
+--track0:拡大率,100,1000,150
+--track1:明るさ,0,200,75
+--track2:ぼかし,0,300,10
+--track3:オフセット,-200,500,0
+--check0:透過しない,1
+
+sw = obj.screen_w
+sh = obj.screen_h
+sw4 = (sh/9)*12
+w = (sw-sw4)/2
+
+zoom = obj.track0/100
+ofs = math.max(-w,obj.track3)
+ofs = math.min(ofs,sw/zoom)
+
+-----
+obj.setoption("drawtarget","tempbuffer",sw,sh)
+
+if (obj.check0)then
+	obj.load("figure","背景",0)
+	obj.draw()
+end
+
+-- 左
+obj.load("framebuffer",w+ofs,0,w+obj.track2,sh)
+	obj.effect("色調補正","明るさ",obj.track1)
+	obj.effect("ぼかし","範囲",obj.track2)
+obj.draw(-(sw-(w*zoom+obj.track2))/2,0,0,zoom)
+
+-- 右
+obj.load("framebuffer",sw-w*2-ofs,0,w,sh)
+	obj.effect("色調補正","明るさ",obj.track1)
+	obj.effect("ぼかし","範囲",obj.track2)
+obj.draw( (sw-(w*zoom))/2,0,0,zoom)
+
+
+obj.load("framebuffer",w,0,sw4,sh)
+obj.draw()
+
+obj.load("tempbuffer")
+
+
+
+------------------------------------------------------------
+@音声波形表示（過去参照）
+------------------------------------------------------------
+--track0:幅,0,1024,512,1
+--track1:高さ,0,768,384,1
+--track2:音量,0,500,100
+--dialog:色1/col,color1=0xffffff;色2/col,color2=0x808080;横解像度,ws=32;縦解像度,hs=32;横スペース(%),spx=25;縦スペース(%),spy=25;落下待機(秒),fallt=0.25;音声保存距離,tmax=64;加速落下/chk,falladd=1;+1表示/chk,isplus=1;Y座標切り上げ/chk,isycut=1;音声波形非表示/chk,disable=0;
+
+local function draw( x,y, w,h )
+	local w = w/2
+	local h = h/2
+	obj.drawpoly(
+		x-w, y-h, 0,	x+w, y-h, 0,	x+w, y+h, 0,	x-w, y+h, 0
+	)
+end
+
+-- 関数のローカル化
+local insert	= table.insert
+local remove	= table.remove
+local floor	= math.floor
+
+
+w	= obj.track0
+h	= obj.track1
+vol	= obj.track2/100
+
+if (ws<=0)then	ws = w	end
+if (hs<=0)then	hs = h	end
+
+ow	= w/ws
+oh	= h/hs
+ows	= w/ws *((100-spx)/100)
+ohs	= h/hs *((100-spy)/100)
+
+sx	= (ow-ows)/2
+sy	= (oh-ohs)/2
+
+cx	= w/2 - ows/2
+cy	= h/2 - ohs/2
+
+fallt	= fallt*obj.framerate
+if (falladd==1)then
+	fallt = fallt*10
+end
+
+adj	= (64/hs)*(64/hs) *hs
+
+obj.setoption("drawtarget","tempbuffer",w,h)
+obj.setoption("blend","alpha_add")
+
+-- 基本音声テーブル
+buf = {}
+n = obj.getaudio(buf,"audiobuffer","spectrum",ws)
+if (n<ws)then
+	debug_print("error:get audio buffer")
+	return
+end
+
+----- 頭 -----
+if (color1~=nil) and (string.len(color1)~=0) then
+	obj.load("figure","四角形",color1)
+
+	-- 0フレームのみ初期化
+	f = obj.time*obj.framerate
+	if (f==0)or(at==nil)then
+		at={}
+	end
+
+	-- 'tmax'フレーム前までのデータを保存
+	for i=1,ws do
+		-- 0フレームのみ（ｒｙ
+		if (f==0)or(at[i]==nil)then
+			at[i] = {}
+		end
+		insert(at[i], 1, buf[i]*vol)
+		if (#at[i]>tmax)then
+			remove(at[i])
+		end
+	end
+
+
+	-- 描画
+		-- 何でdなの？ -> デバッグ時に使ってたコードを流用したため（'d'ebug）
+	for d=1,ws do
+		local vb = 0
+		for l=1,#at[d] do
+			-- 音量（表示座標の）
+			local v = floor(at[d][l]/adj)
+			--      加減速         切り上げ
+			if     (falladd==0 and isycut==0)then	vn	= v -      (l  /fallt)
+			elseif (falladd==0 and isycut==1)then	vn	= v - floor(l  /fallt)
+			elseif (falladd==1 and isycut==0)then	vn	= v -      (l*l/fallt)
+			elseif (falladd==1 and isycut==1)then	vn	= v - floor(l*l/fallt)
+			end
+			if ( vn >= vb )then
+				vb	= vn
+			end
+		end
+
+		x	= -cx + ( (d        -1)*ow)
+		y	=  cy + (-(vb+isplus-1)*oh)
+
+		draw( x+sx,y-sy, ows,ohs )
+	end
+end
+
+
+----- 胴体 -----
+if (disable==0) and (color2~=nil) and (string.len(color2)~=0) then
+	obj.load("figure","四角形",color2)
+
+	for j=1,ws do
+		for k=0,floor(buf[j]*vol/adj) do
+			x = -cx + (ow*(j-1))
+			y =  cy - (oh*(k-1))
+			draw( x+sx,y-sy, ows,ohs )
+		end
+	end
+end
+
+obj.load("tempbuffer")
+
+
+
+------------------------------------------------------------
+@ラベル
+------------------------------------------------------------
+--track0:高さ,0,2048,64,1
+--track1:透明度,0,100,50
+--track2:ぼかし,0,100,5,1
+
+--dialog:色1/col,col1=0x808080;色2/col,col2=0x000000;シャドー 濃さ,shadow_dep=50;シャドー 拡散,shadow_dif=4;
+
+-----
+
+obj.pixeloption("type","col")
+obj.pixeloption("put","obj")
+obj.pixeloption("blend")
+
+-----
+
+local function drawline(y,col)
+	local pp	= obj.putpixel
+	local w		= obj.screen_w-1
+
+	for x=0,w do
+		pp(x,y,col,1)
+	end
+end
+
+-----
+
+local height	= math.min(obj.track0,obj.screen_h-2)
+local g_alpha	= obj.track1
+local blur	= obj.track2
+local scw,sch	= obj.screen_w,obj.screen_h
+
+if(col1==nil)then	gnc1	= 1;	col1	= col2;
+else			gnc1	= 0;
+end
+if(col2==nil)then	gnc2	= 1;	col2	= col1;
+else			gnc2	= 0;
+end
+if(col1==nil and col2==nil)then
+	col1	= 0;	col2	= 0;
+end
+
+
+obj.load("framebuffer", 0,sch-height-2, scw,height+2)
+
+
+obj.effect("ぼかし", 		"範囲",blur, "サイズ固定",1)
+obj.effect("単色化",		"強さ",g_alpha/2, "color",col1)
+obj.effect("グラデーション",
+	"強さ",		g_alpha,	"幅",		height,
+	"color",	col1,		"no_color",	gnc1,
+	"color2",	col2,		"no_color2",	gnc2,
+	"中心Y",	1
+)
+
+drawline(0,col2)
+drawline(1,col1)
+
+obj.effect("シャドー", 		"X",0,"Y",0, "濃さ",shadow_dep, "拡散",shadow_dif)
+
+
+
+-- 固定したい場合はここのコメントアウトを外してください
+--obj.ox	= -obj.x
+--obj.oy	= -obj.y + (sch-height)/2
+
+obj.oy	= (sch-height)/2
+
+
+
+------------------------------------------------------------
+@ブレード
+------------------------------------------------------------
+--track0:個数,1,100,5,1
+--track1:幅,0,500,30
+--track2:高さ,0,1024,128
+--track3:間隔,0,500,10
+--dialog:色/col,color=0xffffff;角度,angle=60;
+
+
+
+local function getX( h, angle )
+	return math.sin(math.rad(90-angle)) * h/math.sin(math.rad(angle))
+end
+
+local function draw( x,y, w,h, angle, alpha )
+	local drawpoly	= obj.drawpoly
+
+	local xx	= getX( h/2, angle )
+	local yy	= h/2
+	local ww,hh	= obj.getpixel()
+
+	local x0,x1,x2,x3	= x,x+w, x+xx+w,x+xx
+	local y0,y1,y2		= y-yy, y, y+yy
+	local u0,u1, v0,v1	= 0,ww, 0,hh
+	if (alpha==nil)then	alpha	= 1 end
+
+	drawpoly(
+		x0, y1, 0,	x3, y0, 0,	x2, y0, 0,	x1, y1, 0,
+		u0,v0,	u0,v0,	u0,v0,	u0,v0,	alpha
+	)
+	drawpoly(
+		x0, y1, 0,	x1, y1, 0,	x2, y2, 0,	x3, y2, 0,
+		u0,v0,	u0,v0,	u0,v0,	u0,v0,	alpha
+	)
+
+end
+
+local n		= obj.track0
+local lw	= obj.track1
+local h		= obj.track2
+local space	= obj.track3
+
+n	= math.floor( n )
+--angle	= 90-angle
+
+local xx	= getX( h/2, angle )
+local ww	= lw+space
+local buf_w	= ww*n-space+math.abs(xx)
+local cw, sign,sign_x
+
+
+
+obj.setoption("drawtarget","tempbuffer", buf_w,h )
+obj.setoption("blend","alpha_add")
+
+obj.load("figure", "四角形", color )
+
+if (math.floor(angle/90)%2 == 0 )then
+	cw	= buf_w/2
+	sign	=  1
+	sign_x	=  0
+
+	for i=0,n-1 do	draw(ww*i-cw,0, lw,h, angle)	end
+else
+	cw	= buf_w/2-lw
+	sign	= -1
+	sign_x	= buf_w+xx
+
+	for i=0,n-1 do	draw(cw-ww*i,0, lw,h, angle)	end
+end
+
+
+obj.load("tempbuffer")
+obj.cx = -buf_w/2 * sign + sign_x
+
+
+
+------------------------------------------------------------
+@ノイズ
+------------------------------------------------------------
+--track0:幅,0,2000,100,1
+--track1:高さ,0,2000,100,1
+--track2:変化速度,0,10,0,1
+--track3:変化回数,0,120,0
+--check0:正方形（幅で指定）,0
+
+local floor	= math.floor
+
+local w		= floor(obj.track0)
+local h		= floor(obj.track1)
+local speed	=      (obj.track2)/10
+local seed	= floor(obj.track3*obj.time)
+local mw= w%2
+local mh= h%2
+w	= w + mw
+h	= h + mh
+
+if(obj.check0)then	h=w	mh=mw end
+
+local size	= w
+if(w<h)then	size	= h end
+
+local ca_w	= 50	-- とりあえず適当に
+
+obj.load("figure","四角形",0xffffff,size+ca_w*2)
+
+obj.effect("ノイズ","type",3, "mode",1,	"変化速度",speed, "seed",seed)
+obj.effect("色ずれ","ずれ幅",ca_w)
+
+local ow,oh	= obj.getpixel()
+
+obj.effect("クリッピング",
+	"左",(ow-w)/2,	"右",(ow-w)/2+mw,
+	"上",(oh-h)/2,	"下",(oh-h)/2+mh
+)
+local ow,oh	= obj.getpixel()
+
+
+
+------------------------------------------------------------
+@ライン（アンカー指定）
+------------------------------------------------------------
+--track0:太さ,0,100,20
+--track1:ライン幅,0,100,1,1
+--track2:個数,3,16,3,1
+--track3:最大距離,0,300,50
+--dialog:色/col,color=0xffffff;座標,pos={-88,50,0,-100,88,50};端を丸める/chk,isRound=1;オーバーサンプリング,oversample=2;ループ/chk,isLoop=0;
+
+local weight	= obj.track0
+local line	= obj.track1
+local n		= obj.track2
+local distance	= obj.track3
+local hw	= weight*0.5
+
+oversample	= oversample	or 1
+if(oversample<0)then	oversample	= 1	end
+
+local us,uc,ue	= 0,weight*oversample*0.5,weight*oversample
+local u0,u1	= uc,uc
+local v0,v1	= 0,weight*oversample
+
+if(isRound==1)then	obj.load("figure","円",    color,weight*oversample,line*oversample)
+else			obj.load("figure","四角形",color,weight*oversample,line*oversample)
+end
+
+-- 仮想バッファのサイズ計算
+local minx,maxx	= pos[1],pos[1]
+local miny,maxy	= pos[2],pos[2]
+
+for i=3,#pos,2 do
+	local x,y	= pos[i],pos[i+1]
+	if	(x<minx)then	minx	= x
+	elseif	(maxx<x)then	maxx	= x
+	end
+	if	(y<miny)then	miny	= y
+	elseif	(maxy<y)then	maxy	= y
+	end
+end
+
+local screen_w	= maxx-minx
+local screen_h	= maxy-miny
+local cx,cy	= screen_w*0.5-maxx,screen_h*0.5-maxy
+
+
+local sqrt	= math.sqrt
+local atan2	= math.atan2
+local pi	= math.pi
+local function drawpoly(x0,y0, x1,y1, x2,y2, x3,y3, u0,v0, u1,v1)
+	obj.drawpoly(
+		x0+cx,y0+cy,0, x1+cx,y1+cy,0, x2+cx,y2+cy,0, x3+cx,y3+cy,0,
+		u0,v0, u1,v0, u1,v1, u0,v1
+	)
+end
+
+if(isLoop==1)then	-- 末尾に最初の座標をコピー
+	n	= obj.setanchor("pos",n,"loop")
+	local	pn	= #pos
+	pos[pn+1]	= pos[1]
+	pos[pn+2]	= pos[2]
+	n		= n+1
+else
+	n	= obj.setanchor("pos",n,"line")
+end
+
+
+
+local padding	= sqrt(2)*weight+distance*2
+distance	= distance+weight*0.5
+obj.setoption("drawtarget","tempbuffer",screen_w+padding,screen_h+padding)
+obj.setoption("blend","alpha_add")
+
+-------------------------
+
+-- 2点間によるベクトルの交点座標
+local function cross(ax1,ay1,ax2,ay2,bx1,by1,bx2,by2)
+	local dax,day	= ax2-ax1,ay2-ay1
+	local dbx,dby	= bx2-bx1,by2-by1
+	local dabx,daby	= bx1-ax1,by1-ay1
+	local d		= dax*dby-day*dbx
+	if(d==0)then	return ax2,ay2	end
+	local r		= (dby*dabx-dbx*daby)/d
+	return ax1+dax*r,ay1+day*r
+end
+
+local dn	= n-1
+local dpos	= {}
+
+for i=1,dn do
+	local px1,py1	= pos[ i   *2-1],pos[ i   *2]
+	local px2,py2	= pos[(i+1)*2-1],pos[(i+1)*2]
+	local dx,dy	= px2-px1,py2-py1
+	local l		= sqrt(dx^2+dy^2)
+	local xv,yv	= dx*hw/l,dy*hw/l
+	local x0,y0	= px1+yv,py1-xv
+	local x1,y1	= px2+yv,py2-xv
+	local x2,y2	= px2-yv,py2+xv
+	local x3,y3	= px1-yv,py1+xv
+
+	dpos[i]	= {x0,y0,x1,y1,x2,y2,x3,y3,atan2(xv,-yv)*90/pi}
+
+	-- 端は先に描画
+	if(isLoop==0)then
+		if(i==1)then
+			local x4,y4	= x0-xv,y0-yv
+			local x5,y5	= x3-xv,y3-yv
+			drawpoly(x4,y4, x0,y0, x3,y3, x5,y5, us,v0, uc,v1)
+
+		elseif(i==dn)then
+			local x4,y4	= x1+xv,y1+yv
+			local x5,y5	= x2+xv,y2+yv
+			drawpoly(x1,y1, x4,y4, x5,y5, x2,y2, uc,v0, ue,v1)
+		end
+	end
+end
+
+for i=1,dn do
+	local x0,y0	= dpos[i][1],dpos[i][2]
+	local x1,y1	= dpos[i][3],dpos[i][4]
+	local x2,y2	= dpos[i][5],dpos[i][6]
+	local x3,y3	= dpos[i][7],dpos[i][8]
+
+	if(i<dn+isLoop)then
+		x1,y1	= cross(dpos[i][1],dpos[i][2],dpos[i][3],dpos[i][4], dpos[i+1][1],dpos[i+1][2],dpos[i+1][3],dpos[i+1][4])
+		x2,y2	= cross(dpos[i][7],dpos[i][8],dpos[i][5],dpos[i][6], dpos[i+1][7],dpos[i+1][8],dpos[i+1][5],dpos[i+1][6])
+
+		----- 角切り落とし
+		local px2,py2	= pos[(i+1)*2-1],pos[(i+1)*2]
+		local r		= dpos[i][9]-dpos[i+1][9]	-- なす角
+		local isUpper	= (90<(r%180))
+		local dx,dy
+
+		local function dp3(x0,y0, x1,y1, x2,y2)
+			-- 1 2 3 3
+			if(isUpper)then	-- 3 1 2 2
+				drawpoly(x2,y2, x0,y0, x1,y1, x1,y1, uc,v0, uc,v1)
+			else		-- 1 1 2 3
+				drawpoly(x0,y0, x0,y0, x1,y1, x2,y2, uc,v0, uc,v1)
+			end
+		end
+
+		if(isUpper)then	-- upper
+			dx	= px2-x1;	dy	= py2-y1;
+		else		-- lower
+			dx	= px2-x2;	dy	= py2-y2;
+		end
+
+		local l	= sqrt(dx*dx+dy*dy)
+
+		if(distance<l)then	-- 指定値を越えたら切り落とし
+			local vx,vy		= -dx/l,-dy/l
+			local dstx,dsty		= px2+vx*distance, py2+vy*distance
+			local cdstx,cdsty	= dstx-vy*100,dsty+vx*100
+			local x4,y4,x5,y5,x6,y6
+
+			if(isUpper)then
+				-- 6 4 5 5
+				x4,y4	= cross(dpos[i+1][1],dpos[i+1][2],dpos[i+1][3],dpos[i+1][4], dstx,dsty,cdstx,cdsty)
+				x5	= x2
+				y5	= y2
+				x6,y6	= cross(x0,y0,x1,y1, dstx,dsty,cdstx,cdsty)
+
+				x1	= x6
+				y1	= y6
+
+			else
+				-- 4 4 5 6
+				x4	= x1
+				y4	= y1
+				x5,y5	= cross(dpos[i+1][7],dpos[i+1][8],dpos[i+1][5],dpos[i+1][6], dstx,dsty,cdstx,cdsty)
+				x6,y6	= cross(x2,y2,x3,y3, dstx,dsty,cdstx,cdsty)
+
+				x2	= x6
+				y2	= y6
+
+			end
+
+			dp3(x4,y4, x5,y5, x6,y6)
+
+			-- 座標修正
+			dpos[i][3]	= x1
+			dpos[i][4]	= y1
+			dpos[i][5]	= x2
+			dpos[i][6]	= y2
+			dpos[i+1][1]	= x4
+			dpos[i+1][2]	= y4
+			dpos[i+1][7]	= x5
+			dpos[i+1][8]	= y5
+		else
+			dpos[i][3]	= x1
+			dpos[i][4]	= y1
+			dpos[i][5]	= x2
+			dpos[i][6]	= y2
+			dpos[i+1][1]	= x1
+			dpos[i+1][2]	= y1
+			dpos[i+1][7]	= x2
+			dpos[i+1][8]	= y2
+		end
+
+	end
+
+	-- 線の描画
+	if(i~=1 or isLoop~=1)then	-- 通常
+		drawpoly(x0,y0, x1,y1, x2,y2, x3,y3, uc,v0, uc,v1)
+	else				-- ループ時の最初は弾く
+		dpos[dn+i]	= dpos[i]
+	end
+	if(i==dn and isLoop==1)then	-- 終端と補間後の座標で描画
+		drawpoly(dpos[1][1],dpos[1][2],dpos[1][3],dpos[1][4],dpos[1][5],dpos[1][6],dpos[1][7],dpos[1][8], uc,v0, uc,v1)
+	end
+end
+
+
+obj.load("tempbuffer")
+
+obj.ox	= -cx
+obj.oy	= -cy
+
+
+
+------------------------------------------------------------
+@グリッド
+------------------------------------------------------------
+--track0:幅,0,2048,640,1
+--track1:高さ,0,2048,480,1
+--track2:サイズ,1,1000,16
+--track3:区間隔,1,1000,5,1
+--dialog:下地/col,BaseColor=0xffffff;区線幅,SeparateLineWidth=2;区線色/col,SeparateLineColor=nil;線幅,LineWidth=1;線色/col,LineColor=0xBBEEFF;
+
+
+local floor	= math.floor
+local drawpoly	= obj.drawpoly
+
+
+local width	= obj.track0
+local height	= obj.track1
+local size	= obj.track2
+local separate	= floor(obj.track3)
+
+local hw,hh	= width*0.5, height*0.5
+local lmax
+if(width>height)then	lmax	= hw
+else			lmax	= hh
+end
+
+
+LineColor		= LineColor		or SeparateLineColor	or 0xffffff
+SeparateLineColor	= SeparateLineColor	or LineColor
+local isDrawLine	= LineWidth		~= nil
+local isDrawSeparateLine= SeparateLineWidth	~= nil
+
+
+obj.setoption("drawtarget","tempbuffer",width,height)
+
+if(BaseColor~=nil)then
+	obj.load("figure","四角形",BaseColor,lmax*2)
+	obj.draw()
+end
+
+obj.load("figure","四角形",0xffffff)
+local w,h	= obj.getpixel()
+obj.effect("グラデーション", "幅",0, "color",SeparateLineColor, "color2",LineColor)
+
+
+
+
+local function DrawLine(p,r,sep)
+	local l
+	if(sep==0)then	l	= SeparateLineWidth
+	else		l	= LineWidth
+	end
+	if(l==nil or l<=0)then	return	end
+	l		= l*0.5
+	local p0,p1	= floor(p-l),floor(p+l)
+	local x0,x1, y0,y1
+	local u0,v0	= 0
+	if(r==0)then	-- Horizontal
+		x0,x1	= -hw,hw
+		y0,y1	=  p0,p1
+	else		-- Vertical
+		x0,x1	=  p0,p1
+		y0,y1	= -hh,hh
+	end
+	if(sep==0)then	v0	= 0
+	else		v0	= h
+	end
+
+	drawpoly(x0,y0,0, x1,y0,0, x1,y1,0, x0,y1,0, u0,v0, u0,v0, u0,v0, u0,v0)
+end
+
+local i		= floor((separate+1)*0.5)
+local p		= (separate%2)*size*0.5
+
+if(p==0)then
+	DrawLine( p,0,1)
+	DrawLine( p,1,1)
+	p	= p+size
+	i	= i+1
+end
+repeat
+	if(i%separate~=0)then
+		DrawLine( p,0,1)
+		DrawLine(-p,0,1)
+		DrawLine( p,1,1)
+		DrawLine(-p,1,1)
+	end
+	p	= p+size
+	i	= i+1
+until(p>lmax)
+
+-- 太線は後で描画しないと色変え時に見栄えが悪い
+p	= separate*0.5*size
+repeat
+	DrawLine( p,0,0)
+	DrawLine(-p,0,0)
+	DrawLine( p,1,0)
+	DrawLine(-p,1,0)
+	p	= p+size*separate
+until(p>lmax)
+
+obj.load("tempbuffer")
+
+
+
+

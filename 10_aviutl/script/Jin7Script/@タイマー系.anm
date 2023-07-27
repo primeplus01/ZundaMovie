@@ -1,0 +1,181 @@
+@震え
+--track0:継続時間,0,300,1,0.1
+--track1:時間1,0,300,300,0.1
+--track2:時間2,0,300,300,0.1
+--track3:時間3,0,300,300,0.1
+--dialog:振幅[0-500],local move=5;角度[0-180],local angle=10;間隔[0-100],local gap=0;
+
+local duration,t,p,x0,x1,x2,x3,y0,y1,y2,y3,r0,r1,r2,r3,x,y,r
+duration	=obj.track0
+
+--■時間を指定する処理--------------------------------------
+if(
+(obj.track1<=obj.time and obj.time<=obj.track1+duration)or
+(obj.track2<=obj.time and obj.time<=obj.track2+duration)or
+(obj.track3<=obj.time and obj.time<=obj.track3+duration)
+)then
+--▼振動処理ココカラ----------------------------------------
+if( gap == 0 ) then
+	obj.ox = obj.ox+rand(-move,move,0)
+	obj.oy = obj.oy+rand(-move,move,1)
+	obj.rz = obj.rz+rand(-angle,angle,2)
+else
+	t = obj.time*100/gap
+	p = math.floor(t)
+	t = t-p
+	x0 = obj.rand(-1000,1000,0,p+0)/1000*move
+	x1 = obj.rand(-1000,1000,0,p+1)/1000*move
+	x2 = obj.rand(-1000,1000,0,p+2)/1000*move
+	x3 = obj.rand(-1000,1000,0,p+3)/1000*move
+	y0 = obj.rand(-1000,1000,1,p+0)/1000*move
+	y1 = obj.rand(-1000,1000,1,p+1)/1000*move
+	y2 = obj.rand(-1000,1000,1,p+2)/1000*move
+	y3 = obj.rand(-1000,1000,1,p+3)/1000*move
+	r0 = obj.rand(-1000,1000,2,p+0)/1000*angle
+	r1 = obj.rand(-1000,1000,2,p+1)/1000*angle
+	r2 = obj.rand(-1000,1000,2,p+2)/1000*angle
+	r3 = obj.rand(-1000,1000,2,p+3)/1000*angle
+	x,y = obj.interpolation(t,x0,y0,x1,y1,x2,y2,x3,y3)
+	obj.ox = obj.ox + x
+	obj.oy = obj.oy + y
+	r = obj.interpolation(t,r0,r1,r2,r3)
+	obj.rz = obj.rz + r
+end
+--▲振動処理ココマデ----------------------------------------
+else
+end
+---------------------------------------------------------------
+@弾み
+--track0:継続時間,0,300,1,0.1
+--track1:時間1,0,300,300,0.1
+--track2:時間2,0,300,300,0.1
+--track3:時間3,0,300,300,0.1
+--dialog:速さ[0.1-100],local speed=5;高さ[0-1000],local high=15;角度[0-360],local angle=0;ずらし[0-100],local gap=0;
+
+local l,duration,s_time,nomove,n,h,h2,r
+duration=obj.track0
+l = math.floor((10/speed)*obj.framerate)/obj.framerate;
+
+if(obj.track1<=obj.time and obj.time<obj.track1+duration)then
+	s_time	=obj.track1
+	nomove	=1
+elseif(obj.track2<=obj.time and obj.time<obj.track2+duration)then
+	s_time	=obj.track2
+	nomove	=1
+elseif(obj.track3<=obj.time and obj.time<obj.track3+duration)then
+	s_time	=obj.track3
+	nomove	=1
+else
+	s_time	=0
+	nomove	=0
+end
+
+n,h = math.modf((obj.time-s_time)/l+obj.index*gap/100)
+
+h2 = (1-((h-0.5)*2)^2)*high
+r = angle*math.pi/180
+obj.ox = obj.ox+math.sin(r)*h2*nomove
+obj.oy = obj.oy-math.cos(r)*h2*nomove
+---------------------------------------------------------------
+@点滅
+--track0:継続時間,0,300,1,0.1
+--track1:時間1,0,300,300,0.1
+--track2:時間2,0,300,300,0.1
+--track3:時間3,0,300,300,0.1
+--dialog:回数,local nm=3;
+
+local duration	=obj.track0
+local dur	=duration*obj.framerate/(nm*2)
+
+if(
+(obj.track1<=obj.time and obj.time<=obj.track1+duration)or
+(obj.track2<=obj.time and obj.time<=obj.track2+duration)or
+(obj.track3<=obj.time and obj.time<=obj.track3+duration)
+)then
+	obj.alpha	=(math.floor(obj.frame/dur)+1)%2
+end
+---------------------------------------------------------------
+@斜めクリッピング
+--track0:開始時間,0,300,1,0.1
+--track1:位置,-1000,1000,0,1
+--track2:角度,0.0,360.0,90,0.1
+--track3:幅,0,1000,10,1
+--check0:基準位置を縦にする,0
+obj.effect()
+local Xcent,Ycent
+if(obj.check0)then
+	Xcent=0
+	Ycent=1
+else
+	Xcent=1
+	Ycent=0
+end
+
+if(obj.time>=obj.track0)then
+obj.effect("斜めクリッピング","中心X",obj.track1*Xcent,"中心Y",obj.track1*Ycent,"角度",obj.track2,"幅",-obj.track3)
+end
+
+---------------------------------------------------------------
+@ﾌｨﾙﾀ有効/無効
+--track0:継続時間,0,300,0,0.1
+--track1:時間1,0,300,300,0.1
+--track2:時間2,0,300,300,0.1
+--track3:時間3,0,300,300,0.1
+--check0:無効化にする,0
+
+local dur=obj.track0
+if(obj.check0)then
+----■チェックした時＝無効化-------------------------------------
+if(dur==0)then	----無効化する
+	obj.draw()
+elseif(obj.track1<=obj.time and obj.time<obj.track1+dur)then
+	obj.draw()
+elseif(obj.track2<=obj.time and obj.time<obj.track2+dur)then
+	obj.draw()
+elseif(obj.track3<=obj.time and obj.time<obj.track3+dur)then
+	obj.draw()
+else		----有効化する
+	--なにもしない--
+end
+
+else----■チェックなし＝有効化-----------------------------------
+if(dur==0)then	--ゼロの時
+	--なにもしない--
+elseif(obj.track1<=obj.time and obj.time<obj.track1+dur)then
+	--なにもしない--
+elseif(obj.track2<=obj.time and obj.time<obj.track2+dur)then
+	--なにもしない--
+elseif(obj.track3<=obj.time and obj.time<obj.track3+dur)then
+else	--それ以外
+obj.draw()
+end
+----■ifの終わり-------------------------------------------------
+end
+
+@振り子
+--track0:継続時間,0,300,1,0.1
+--track1:時間1,0,300,300,0.1
+--track2:時間2,0,300,300,0.1
+--track3:時間3,0,300,300,0.1
+--dialog:速さ[0-10],local spd=2;角度[0-180],local agl=30;ずらし[0-100],local dpl=0;中心縦位置,local cy=0;
+
+local duration	=obj.track0
+
+
+spd	=math.max(0,math.min(spd,10))
+agl	=math.max(0,math.min(agl,180))
+dpl	=math.max(0,math.min(dpl,100))
+
+if(obj.track1<=obj.time and obj.time<=obj.track1+duration)then
+obj.rz = obj.rz+math.sin(((obj.time-obj.track1)*spd+dpl/50)*math.pi)*agl
+
+elseif(obj.track2<=obj.time and obj.time<=obj.track2+duration)then
+obj.rz = obj.rz+math.sin(((obj.time-obj.track2)*spd+dpl/50)*math.pi)*agl
+
+elseif(obj.track3<=obj.time and obj.time<=obj.track3+duration)then
+obj.rz = obj.rz+math.sin(((obj.time-obj.track3)*spd+dpl/50)*math.pi)*agl
+
+else
+end
+
+obj.cy = cy

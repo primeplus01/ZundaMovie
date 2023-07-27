@@ -1,0 +1,737 @@
+@フリー移動
+--track0:ｱﾝｶｰ数,2,16,2,1
+--track1:角度,-360,360,0,0.1
+--track2:サイズ,0,1000,100,0.1
+--check0:直線移動,0
+--dialog:座標,pos={};基準点を向く/chk,local cen=0;X角度,local rx=0;Y角度,local ry=0;
+obj.effect()
+
+local num,rz,mvtime,zoom,size,start_x,start_y
+local t,x0,y0,x1,y1,x2,y2,x3,y3,i,alpha,ox,oy
+num	=obj.track0
+rz	=obj.track1
+size	=obj.track2/100
+mvtime	=obj.totaltime/(num-1)
+zoom	=obj.getvalue("zoom")/100
+obj.setanchor("pos",num,"line")
+start_x	=pos[1]
+start_y	=pos[2]
+
+if(obj.check0)then	--直線/曲線移動判定----------------------
+--◆◆直線移動◆◆-----------------------------------------------
+if(obj.time==obj.totaltime)then	----▼大外のif--------------
+	ox	=pos[num*2-1]	----最終フレームで画像が  --
+	oy	=pos[num*2]	----消えてしまう事象の対処--
+	alpha	=1		----------------------------
+	rr	=math.deg(math.atan2(oy,ox))*cen
+	obj.draw(ox,oy,0,size,alpha,rx,ry,rz+rr)
+
+else
+
+for i=0 ,num-1 do
+--■ループの中身-ココカラ----------------------------
+	sx	=pos[i*2+1]
+	sy	=pos[i*2+2]
+	ex	=pos[i*2+3]
+	ey	=pos[i*2+4]
+
+	tt	=(obj.time-i*mvtime)/mvtime
+	tt	=math.max(0,math.min(1,tt))
+
+	if(mvtime*i<=obj.time and obj.time<mvtime*(i+1))then
+		ox	=sx+(ex-sx)*tt
+		oy	=sy+(ey-sy)*tt
+		alpha	=1
+	else
+		ox	=sx
+		oy	=sy
+		alpha	=0
+	end
+rr	=math.deg(math.atan2(oy,ox))*cen
+obj.draw(ox,oy,0,size,alpha,rx,ry,rz+rr)
+--■ループの中身-ココマデ----------------------------
+end
+--▲大外のifココマデ----------------------------------------
+end
+
+else	--直線/曲線移動判定--------------------------------------
+
+--◆◆曲線移動◆◆-----------------------------------------------
+for i=0 ,num-1 do
+--■ループの中身-ココカラ----------------------------
+----▼アンカーポイントの位置決め処理-----------------
+if(i==0)then		--最初の点--------------
+	x0=pos[1]*zoom
+	y0=pos[2]*zoom
+	x1=x0
+	y1=y0
+	x2=x0
+	y2=y0
+	x3=x0
+	y3=y0
+	
+elseif(i==1)then	--2番目の点-------------
+	x0=pos[1]*zoom
+	y0=pos[2]*zoom
+	x1=x0
+	y1=y0
+	x2=pos[3]*zoom
+	y2=pos[4]*zoom
+	--個数が「2」の場合の追加処理-----------
+	if(num==2)then
+		x3=pos[3]*zoom
+		y3=pos[4]*zoom
+	else
+		x3=pos[5]*zoom
+		y3=pos[6]*zoom
+	end
+	----------------------------------------
+elseif(i==num-1)then	--最後の点--------------
+	x0=pos[i*2-3]*zoom
+	y0=pos[i*2-2]*zoom
+	x1=pos[i*2-1]*zoom
+	y1=pos[i*2]*zoom
+	x2=pos[i*2+1]*zoom
+	y2=pos[i*2+2]*zoom
+	x3=x2
+	y3=y2
+else			--それ以外--------------
+	x0=pos[i*2-3]*zoom
+	y0=pos[i*2-2]*zoom
+	x1=pos[i*2-1]*zoom
+	y1=pos[i*2]*zoom
+	x2=pos[i*2+1]*zoom
+	y2=pos[i*2+2]*zoom
+	x3=pos[i*2+3]*zoom
+	y3=pos[i*2+4]*zoom
+end
+----▼描画処理--------------------------------------
+t=((obj.time-mvtime*(i-1))/mvtime)
+t=math.min(1,math.max(0,t))
+
+if(i==num-1 and obj.time==obj.totaltime)then
+	alpha=1		--最終Fで非表示になるのを防ぐ
+elseif(i==0 and obj.time==0)then
+	alpha=1		--先頭Fで非表示になるのを防ぐ
+else
+	if(t<=0 or 1<=t)then	--該当時間のみ表示---
+		alpha=0
+	else
+		alpha=1
+	end	--当該時間のみ表示ifの終了-----------
+end	--フレーム非表示処理ifの終了-----------------
+
+ox,oy = obj.interpolation(t,x0,y0,x1,y1,x2,y2,x3,y3)
+
+rr	=math.deg(math.atan2(oy,ox))*cen
+obj.draw(ox,oy,0,size,alpha,rx,ry,rz+rr)
+
+--■ループの中身-ココマデ----------------------------
+end
+-----------------------------------------------------------------
+end	--直線/曲線判定のifの終わり
+
+--[[更新履歴-----------------------------------------------------
+12/08/01	完成
+12/10/21	サイズ機能を追加
+12/11/13	拡大率変化でアンカーがおかしくなることに気づき
+		パラメータを大幅修正
+12/11/29	先頭・最終フレームで消える不具合を修正
+12/12/01	直線移動を追加して体裁を整える
+		基準を向く機能を追加
+]]---------------------------------------------------------------
+
+@配置
+--track0:個数,1,16,1,1
+--track1:個別ｻｲｽﾞ,0,800,100,0.1
+--track2:角度,-360,360,0,0.1
+--track3:変化間隔,-1,10,0,0.01
+--check0:消えていく,0
+--dialog:変化時間,local disp=0;登場タイプ[0-8],local type=0;個別縦横比[%],local d_asp=0;ランダム角度/chk,local rdm=0;X軸回転,local xag=0;Y軸回転,local yag=0;基準点に向ける/chk,local cen=0;基準点を表示/chk,local cenp=0;座標,pos={};
+obj.effect()
+local	angle,g_tie,d_time,before,after,onway,change
+local	aspect,lpha,zoom,r_ran,sz,rr,num
+local ox={}
+local oy={}
+objzoom	=obj.getvalue("zoom")/100
+sz	=obj.track1/100
+angle	=obj.track2
+num	=obj.track0
+
+if(rdm==nil)then rdm=0 end
+--■変化間隔～マイナスの時は均等化-----
+if	(obj.track3<0)then
+	g_time	=obj.totaltime/num
+else
+	g_time	=obj.track3
+end
+--■変化時間～マイナスの時は均等化-----
+if	(disp<0)then
+	d_time	=obj.totaltime/num
+else
+	d_time	=disp
+end
+--■ここから描画関連----------------------------------------
+obj.setanchor("pos",num,"line")
+for i=0,num-1 do
+	ox[i] = pos[i*2+1]*objzoom
+	oy[i] = pos[i*2+2]*objzoom
+  --▼表示していく/消えていくフラグ-------------------------
+	if(obj.check0)then
+		before	=1
+		after	=0
+		onway	=1-((obj.time-g_time*i)/d_time)
+		ppp	=1-((obj.time-g_time*i)/d_time)
+	else
+		before	=0
+		after	=1
+		onway	=(obj.time-g_time*i)/d_time
+		ppp	=(obj.time-g_time*i)/d_time
+	end
+  --▼変化する時間を識別------------------------------------
+	if	(g_time==0 and d_time==0)then
+		change=1
+		aspect=0
+		pp=1
+	elseif	((g_time*i+d_time)<obj.time)then
+		change=after
+		pp	=after
+	elseif	(obj.time<g_time*i)then
+		change=before
+		pp	=before
+	else
+		change=onway
+		pp	=ppp
+	end
+  --▼表示パターン-----------------------------------------
+	if	(type==1)then	--拡大率変化
+		alpha,zoom,aspect=1,change,0
+	elseif	(type==2)then	--アス比縦
+		alpha,zoom,aspect=1,1,1-change
+	elseif	(type==3)then	--アス比横
+		alpha,zoom,aspect=1,1,-(1-change)
+	elseif	(type==4)then	--透明+拡大率変化
+		alpha,zoom,aspect=change,change,0
+	elseif	(type==5)then	--透明+アス比縦
+		alpha,zoom,aspect=change,1,1-change
+	elseif	(type==6)then	--透明+アス比横
+		alpha,zoom,aspect=change,1,-(1-change)
+	elseif	(type==7)then	--拡大+アス比縦
+		alpha,zoom,aspect=1,change,1-change
+	elseif	(type==8)then	--拡大+アス比横
+		alpha,zoom,aspect=1,change,-(1-change)
+	else			--0とそれ以外～透明度変化
+		alpha,zoom,aspect=change,1,0
+	end
+  --■ランダム角度----------------------------------------
+	if(rdm==1)then
+		r_ran	=obj.rand(-360,360,angle+i,1)
+		rr	=0
+	else
+	  --■中央に向ける--------------------------------
+	  --※ランダム角度も有効な時にはランダムを優先----
+		if(cen==1)then
+			rr=math.deg(math.atan2(oy[i],ox[i]))
+		else
+			rr=0
+		end
+		r_ran	=0
+	end
+
+
+  --▼描画------------------------------------------------
+	obj.aspect	=d_asp/100+aspect
+	obj.draw(ox[i],oy[i],0,sz*zoom,alpha,xag or 0,yag or 0,angle+r_ran+rr)
+end  --■ループ終わり-------------------------------------
+
+if(cenp==1)then
+	obj.load("figure","円",0xff0000,20)
+	obj.draw(0,0)
+else end
+
+--[[------------------------------------------------------
+■更新履歴
+12/07/14	公開
+12/09/09	変数のローカル化
+		縦横比の追加
+		ランダム角度の追加
+12/10/28	個別サイズ変更パラメータ追加	
+		中央に向けるのチェック追加
+]]--------------------------------------------------------
+
+@直線連続配置
+--track0:ｱﾝｶｰ数,2,16,2,1
+--track1:配置数,1,1000,10,1
+--track2:個別ｻｲｽﾞ,0,800,100,0.1
+--track3:個別角度,-360,360,0,0.1
+--check0:消えていく,0
+--dialog:表示速度,spd=1.5;X角度,local drx=0;Y角度,local dry=0;X回転倍率,local rxr=0;Y回転倍率,local ryr=0;Z回転倍率,local rzr=0;座標,pos={};
+obj.effect()
+
+local anm,rx,ry,rz,zm,sz,alpha,ox,oy
+local px1,py1,px2,py2
+tt	=obj.time/obj.totaltime
+zm	=obj.getvalue("zoom")/100
+anm	=obj.track0
+ob	=obj.track1
+sz	=obj.track2/100
+rz	=obj.track3+360*rzr*tt
+rx	=drx+360*rxr*tt
+ry	=dry+360*ryr*tt
+
+obj.setanchor("pos",anm,"line")
+	dp	=((obj.totaltime/(anm-1))/ob)
+--■「消えて行く」処理とフラグ-------------------------------------
+if(obj.check0)then
+	al1	=0
+	al2	=1
+	if(obj.time<=0 or spd<=0)then			--初期地点の表示
+		obj.draw(pos[1],pos[2],0,1,1,rx,ry,rz)
+	else
+		obj.draw(pos[1],pos[2],0,1,0,rx,ry,rz)
+	end
+else
+	al1	=1
+	al2	=0
+	obj.draw(pos[1],pos[2],0,1,1,rx,ry,rz)	--初期地点の表示
+end
+for i=1 ,anm-1 do
+--▼ループの中身-ココカラ------------------------------------------
+px1	=pos[i*2-1]*zm
+py1	=pos[i*2]*zm
+px2	=pos[i*2+1]*zm
+py2	=pos[i*2+2]*zm
+
+----■描画処理-----------------------------------------------------
+for j=1 ,ob do 
+ox	=px1+(px2-px1)/ob*j
+oy	=py1+(py2-py1)/ob*j
+
+
+if(0<spd)then		--個々のオブジェクトを表示させていく処理
+	spdfl	=(obj.time-(ob*(i-1)+j)*dp/spd)
+	if(0<=spdfl)then
+		alpha=al1
+	else
+		alpha=al2
+	end
+else				--表示速度0の時は一括表示
+	alpha=1
+end
+obj.draw(ox,oy,0,sz,alpha,rx,ry,rz)
+end
+--▲ループの中身-ココマデ-----------------------------------------
+end
+
+@曲線連続配置
+--track0:ｱﾝｶｰ数,2,14,2,1
+--track1:配置数,1,1000,10,1
+--track2:個別ｻｲｽﾞ,0,800,100,0.1
+--track3:個別角度,-360,360,0,0.1
+--check0:終始・基準点を明示,0
+--dialog:表示速度,local spd=1.5;消えていく/chk,local vsh=0;X角度,local drx=0;Y角度,local dry=0;X回転倍率,local rxr=0;Y回転倍率,local ryr=0;Z回転倍率,local rzr=0;座標,pos={};
+obj.effect()
+
+local anm,rx,ry,rz,zm,sz,alpha,ox,oy
+local x0,y0,x1,y1,x2,y2,x3,y3
+tt	=obj.time/obj.totaltime
+zm	=obj.getvalue("zoom")/100
+anm	=obj.track0
+ob	=obj.track1
+sz	=obj.track2/100
+rz	=obj.track3+360*rzr*tt
+rx	=drx+360*rxr*tt
+ry	=dry+360*ryr*tt
+
+obj.setanchor("pos",anm+2,"line")
+	dp	=((obj.totaltime/(anm-1))/ob)
+--■「消えていく」処理とフラグ-------------------------------------
+if(vsh==0)then
+	al1	=1
+	al2	=0
+	obj.draw(pos[3],pos[4],0,1,1,rx,ry,rz)	--初期地点の表示
+else
+	al1	=0
+	al2	=1
+	if(obj.time<=0 or spd<=0)then			--初期地点の表示
+		obj.draw(pos[3],pos[4],0,1,1,rx,ry,rz)
+	else
+		obj.draw(pos[3],pos[4],0,1,0,rx,ry,rz)
+	end
+end
+
+for i=1 ,anm-1 do
+--▼ループの中身-ココカラ------------------------------------------
+x0	=pos[i*2-1]*zm
+y0	=pos[i*2]*zm
+x1	=pos[i*2+1]*zm
+y1	=pos[i*2+2]*zm
+x2	=pos[i*2+3]*zm
+y2	=pos[i*2+4]*zm
+x3	=pos[i*2+5]*zm
+y3	=pos[i*2+6]*zm
+----■描画処理-----------------------------------------------------
+for j=1 ,ob do 
+ox,oy = obj.interpolation(1/ob*j,x0,y0,x1,y1,x2,y2,x3,y3)
+
+if(0<spd)then		--個々のオブジェクトを表示させていく処理
+	spdfl	=(obj.time-(ob*(i-1)+j)*dp/spd)
+		if(0<=spdfl)then
+			alpha=al1
+		else
+			alpha=al2
+		end
+else				--表示速度0の時は一括表示
+	alpha=1
+end
+
+obj.draw(ox,oy,0,sz,alpha,rx,ry,rz)
+
+end
+--▲ループの中身-ココマデ-----------------------------------------
+end
+
+if(obj.check0)then	----終始・基準点の表示--------------------
+	obj.load("figure","星型",0xcaffff,30)
+	obj.draw(pos[3],pos[4])
+	obj.draw(pos[anm*2+1],pos[anm*2+2])
+	obj.load("figure","円",0xff0000,30)
+	obj.draw(pos[1],pos[2])
+	obj.draw(pos[anm*2+3],pos[anm*2+4])
+else end
+
+@みだれうち
+--track0:弾数,1,16,3,1
+--track1:基本ｻｲｽﾞ,0,1000,100,0.1
+--track2:基本角度,-360,360,0,0.1
+--track3:ずらし,-1,10,-1,0.01
+--check0:始点に集中させる,0
+--dialog:座標,rpos={};連続回転,local round=0;総移動時間[%],local t_mv=95;自動角度計算/chk,local autoang=1;初期地点非表示/chk,local strt=1;到達したら消滅/chk,local vanish=1;
+
+local	zm,num,sz,ang,gap,mv,i,xx,yy,t_sd,tt
+local	life,ox,oy,alpha,rr,al1,al2
+zm	=obj.getvalue("zoom")/100
+num	=obj.track0
+sz	=obj.track1/100
+ang	=obj.track2
+gap	=obj.track3
+mv	=t_mv/100
+
+obj.setanchor("rpos",num)
+
+obj.effect()
+for i=0,num-1 do
+--▼forループ ココカラ------------------------------------------
+xx	=rpos[i*2+1]*zm
+yy	=rpos[i*2+2]*zm
+
+	--●時間ずらし処理----------------------------------
+	if(gap==0)then		--0の時は同時に移動
+		t_sd=obj.time/(obj.totaltime*mv)
+	elseif(gap<0)then
+		life=(obj.totaltime*mv)/num
+		t_sd=(obj.time-(life)*i)/life
+	elseif(gap*num>obj.totaltime*mv)then
+		t_sd=obj.time/(obj.totaltime*mv)
+	else
+		life=(obj.totaltime*mv)-gap*num
+		t_sd=(obj.time-(gap)*i)/life
+	end
+
+tt	=math.max(0,math.min(1,t_sd))
+
+	--●初期地点は表示しない----------------------------
+	if(strt==1)then
+		if(tt<=0)then
+			al1=0
+		else
+			al1=1
+		end
+	else
+		al1=1
+	end
+
+	--●到達したら消滅----------------------------------
+	if(vanish==1)then
+		if(tt==1)then
+			al2=0
+		else
+			al2=1
+		end
+	else
+		al2=1
+	end
+	
+	alpha	=al1*al2
+
+	--●自動角度計算処理--------------------------------
+	if(autoang==1)then
+		rr=math.deg(math.atan2(yy,xx))+360*round*tt
+	else
+		rr=1
+	end
+
+	--●拡散/集中切替-----------------------------------
+	if(obj.check0)then
+		ox	=xx*(1-tt)
+		oy	=yy*(1-tt)
+	else
+		ox	=xx*tt
+		oy	=yy*tt
+	end
+
+obj.draw(ox,oy,0,sz,alpha,0,0,90-ang+rr)
+
+--▲forループ ココマデ------------------------------------------
+end
+
+@ポインター
+--track0:ｱﾝｶｰ数,2,16,2,1
+--track1:配置数,2,1000,100,1
+--track2:移動前(秒,0,10,0.5,0.1
+--track3:サイズ,0,1000,100,0.1
+--check0:直線移動,0
+--dialog:座標,lsrps={};外側拡大量,local szad=0;X角度,local rx=0;Y角度,local ry=0;Z角度,local rz=0;
+obj.effect()
+
+local num,mvtime,zoom,dsz,start_x,start_y,onm,ttm
+local t,x0,y0,x1,y1,x2,y2,x3,y3,i,alpha,ox,oy,xx,yy
+num	=obj.track0
+onm	=obj.track1
+stm	=obj.track2
+dsz	=obj.track3/100
+mvtime	=(obj.totaltime-stm)/(num-1)
+zoom	=obj.getvalue("zoom")/100
+obj.setanchor("lsrps",num,"line")
+start_x	=lsrps[1]
+start_y	=lsrps[2]
+
+if(obj.check0)then--■直線・曲線判定■■■■■■■■■■■■■■■■■■■
+if(obj.time<=stm and 0<stm)then--◇初期描画/移動判定◇◇◇◇◇◇◇◇◇◇
+for jj=0 ,onm-1 do
+	ox	=lsrps[1]/(onm-1)*jj
+	oy	=lsrps[2]/(onm-1)*jj
+	tt	=(obj.time-stm/onm*jj)/stm
+	sz1	=dsz+(szad/100)/onm*(jj)
+	sz1	=math.max(0,sz1)
+
+	if(0<=tt)then
+		alpha=1
+	else
+		alpha=0
+	end
+
+	obj.draw(ox,oy,0,sz1,alpha,rx,ry,rz)
+end
+
+else
+
+if(obj.time==obj.totaltime)then	----▼大外のif--------------
+	xx	=lsrps[num*2-1]	----最終フレームで画像が  --
+	yy	=lsrps[num*2]	----消えてしまう事象の対処--
+	alpha	=1		----------------------------
+
+for j=0,onm-1 do
+	ox	=xx/(onm-1)*j
+	oy	=yy/(onm-1)*j
+	sz2	=dsz+(szad/100)/onm*(j)
+	sz2	=math.max(0,sz2)
+	obj.draw(ox,oy,0,sz2,alpha,rx,ry,rz)
+end
+
+else --◇初期描画/移動判定◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇
+
+for i=0 ,num-1 do
+--■ループの中身-ココカラ----------------------------
+	sx	=lsrps[i*2+1]
+	sy	=lsrps[i*2+2]
+	ex	=lsrps[i*2+3]
+	ey	=lsrps[i*2+4]
+	ttm	=((obj.time-stm)-mvtime*i)/mvtime
+	ttm	=math.max(0,math.min(1,ttm))
+
+	if(mvtime*i<=obj.time-stm and obj.time-stm<mvtime*(i+1))then
+		xx	=sx+(ex-sx)*ttm
+		yy	=sy+(ey-sy)*ttm
+		alpha	=1
+	else
+		xx	=sx
+		yy	=sy
+		alpha	=0
+	end
+
+for j=0,onm-1 do
+	ox	=xx/(onm-1)*j
+	oy	=yy/(onm-1)*j
+	sz2	=dsz+(szad/100)/onm*(j)
+	sz2	=math.max(0,sz2)
+	obj.draw(ox,oy,0,sz2,alpha,rx,ry,rz)
+end
+
+--■ループの中身-ココマデ----------------------------
+end
+
+--▲大外のifココマデ----------------------------------------
+end
+
+end--◇初期描画/移動判定◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇
+else--■直線・曲線判定■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+if(obj.time<=stm and 0<stm)then--◇初期描画/移動判定◇◇◇◇◇◇◇◇◇◇
+
+--▼初期描画/移動判定（初期描画ココカラ）--------------------
+for jj=0 ,onm-1 do 
+	ox	=lsrps[1]/(onm-1)*jj
+	oy	=lsrps[2]/(onm-1)*jj
+	tt	=(obj.time-stm/onm*jj)/stm
+	sz1	=dsz+(szad/100)/onm*(jj)
+	sz1	=math.max(0,sz1)
+
+	if(0<=tt)then
+		alpha=1
+	else
+		alpha=0
+	end
+
+	obj.draw(ox,oy,0,sz1,alpha,rx,ry,rz)
+end
+
+else --◇初期描画/移動判定◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇
+for i=0 ,num-1 do
+--■ループの中身-ココカラ----------------------------
+if(i==0)then		--最初の点--------------
+	x0=lsrps[1]*zoom
+	y0=lsrps[2]*zoom
+	x1=x0
+	y1=y0
+	x2=x0
+	y2=y0
+	x3=x0
+	y3=y0
+	
+elseif(i==1)then	--2番目の点-------------
+	x0=lsrps[1]*zoom
+	y0=lsrps[2]*zoom
+	x1=x0
+	y1=y0
+	x2=lsrps[3]*zoom
+	y2=lsrps[4]*zoom
+	--個数が「2」の場合の追加処理-----------
+	if(num==2)then
+		x3=lsrps[3]*zoom
+		y3=lsrps[4]*zoom
+	else
+		x3=lsrps[5]*zoom
+		y3=lsrps[6]*zoom
+	end
+	----------------------------------------
+elseif(i==num-1)then	--最後の点--------------
+	x0=lsrps[i*2-3]*zoom
+	y0=lsrps[i*2-2]*zoom
+	x1=lsrps[i*2-1]*zoom
+	y1=lsrps[i*2]*zoom
+	x2=lsrps[i*2+1]*zoom
+	y2=lsrps[i*2+2]*zoom
+	x3=x2
+	y3=y2
+else			--それ以外--------------
+	x0=lsrps[i*2-3]*zoom
+	y0=lsrps[i*2-2]*zoom
+	x1=lsrps[i*2-1]*zoom
+	y1=lsrps[i*2]*zoom
+	x2=lsrps[i*2+1]*zoom
+	y2=lsrps[i*2+2]*zoom
+	x3=lsrps[i*2+3]*zoom
+	y3=lsrps[i*2+4]*zoom
+end
+----▼描画処理--------------------------------------
+ttm=(((obj.time-stm)-mvtime*(i-1))/mvtime)
+ttm=math.min(1,math.max(0,ttm))
+
+if(i==num-1 and obj.time==obj.totaltime)then
+	alpha=1		--最終Fで非表示になるのを防ぐ
+elseif(i==0 and obj.time==0)then
+	alpha=1		--先頭Fで非表示になるのを防ぐ
+else
+	if(ttm<=0 or 1<=ttm)then	--該当時間のみ表示---
+		alpha=0
+	else
+		alpha=1
+	end	--当該時間のみ表示ifの終了-----------
+end	--フレーム非表示処理ifの終了-----------------
+
+xx,yy = obj.interpolation(ttm,x0,y0,x1,y1,x2,y2,x3,y3)
+
+for j=0,onm-1 do
+
+ox=xx/(onm-1)*j
+oy=yy/(onm-1)*j
+sz2	=dsz+(szad/100)/onm*(j)
+sz2	=math.max(0,sz2)
+obj.draw(ox,oy,0,sz2,alpha,rx,ry,rz)
+end
+--■ループの中身-ココマデ----------------------------
+end
+end--◇初期描画/移動判定◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇◇
+
+end--■直線・曲線判定■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+@部分変色
+--track0:ﾎﾟｲﾝﾄ数,1,10,1,1
+--track1:個別ｻｲｽﾞ,0,1000,100,0.1
+--track2:角度,-360,360,0,1
+--track3:縦横比,-100,100,0,0.1
+--check0:輝度を保持する,1
+--dialog:色/col,local col=0xff0000;基本図形/fig,local fig="円";座標,mask_pos={};周辺ぼかし,local mgra=10;透過部にﾌｨﾙﾀ/chk,local fil=0;縁補正,local edge=1;
+
+local	num,sz,ang,asp,i,bri,mtyp
+num	=obj.track0
+sz	=obj.track1
+ang	=obj.track2
+asp	=obj.track3
+mgra	=math.max(0,math.min(200,mgra))
+obj.setanchor("mask_pos",num)
+if(obj.check0)then
+	bri	=1
+else
+	bri	=0
+end
+
+--●図形をﾀｲﾌﾟ値に変換する--
+if(fig=="四角形")then
+	mtyp	=2
+elseif(fig=="三角形")then
+	mtyp	=3
+elseif(fig=="五角形")then
+	mtyp	=4
+elseif(fig=="六角形")then
+	mtyp	=5
+elseif(fig=="星型")then
+	mtyp	=6
+else
+	mtyp	=1
+end
+--●背面に単色化画像を描画-----------------
+obj.copybuffer("tmp","obj")
+	if(fil==1)then
+		obj.effect()
+	end
+	obj.effect("単色化","color",col,"輝度を保持する",bri)
+	obj.effect("境界ぼかし","範囲",edge or 1,"透明度の境界をぼかす",1)
+obj.draw()
+obj.load("tempbuffer")
+-------------------------------------------
+for i=0,num-1 do
+--▼forループ ココカラ---------------------
+xx	=mask_pos[i*2+1]
+yy	=mask_pos[i*2+2]
+obj.effect("マスク","X",xx,"Y", yy,
+	"回転",ang,"サイズ",sz,
+	"縦横比",asp,"ぼかし",mgra,
+	"type",mtyp,"マスクの反転", 1)
+
+--▲forループ ココマデ---------------------
+end
+
+obj.effect()
+obj.draw()

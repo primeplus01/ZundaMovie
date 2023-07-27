@@ -1,0 +1,891 @@
+@n分の1拡大
+--track0:100/n,1,2000,100
+obj.zoom=obj.zoom*100/obj.track0
+
+@2次ベジェ曲線
+--track0:制御X,-1000,1000,0
+--track1:制御Y,-1000,1000,-100
+--track2:制御Z,-1000,1000,0
+--dialog:補助線表示/chk,hojo=1;補助線色/col,color=0xff0000;
+obj.effect()
+--始点
+x0=obj.getvalue("x",0)
+y0=obj.getvalue("y",0)
+z0=obj.getvalue("z",0)
+xa=x0-obj.getvalue("x",obj.time)
+ya=y0-obj.getvalue("y",obj.time)
+za=z0-obj.getvalue("z",obj.time)
+
+--終点
+x1=obj.getvalue("x",obj.totaltime)
+y1=obj.getvalue("y",obj.totaltime)
+z1=obj.getvalue("z",obj.totaltime)
+xb=x1-obj.getvalue("x",obj.time)
+yb=y1-obj.getvalue("y",obj.time)
+zb=z1-obj.getvalue("z",obj.time)
+
+--制御点
+sx=obj.track0+(xa+xb)/2
+sy=obj.track1+(ya+yb)/2
+sz=obj.track2+(za+zb)/2
+
+--座標の計算
+t=obj.time/obj.totaltime
+obj.ox=((1-t)^2)*xa+2*t*(1-t)*sx+(t^2)*xb
+obj.oy=((1-t)^2)*ya+2*t*(1-t)*sy+(t^2)*yb
+obj.oz=((1-t)^2)*za+2*t*(1-t)*sz+(t^2)*zb
+obj.draw()
+
+--補助線
+if(hojo==1) then
+  a=0.5
+  obj.setoption("billboard",3)
+  obj.load("figure","円",color,50)
+  obj.draw(xa,ya,za,1,a)
+  obj.draw(xb,yb,zb,1,a)
+  obj.setoption("billboard",3)
+  obj.load("figure","四角形",color,50)
+  obj.draw(sx,sy,sz,1,a)
+  obj.setoption("billboard",3)
+  obj.load("figure","円",color,10)
+  n=20
+  for i=0,n-1 do
+    t=i/n
+    x=((1-t)^2)*xa+2*t*(1-t)*sx+(t^2)*xb
+    y=((1-t)^2)*ya+2*t*(1-t)*sy+(t^2)*yb
+    z=((1-t)^2)*za+2*t*(1-t)*sz+(t^2)*zb
+    obj.draw(x,y,z,1,a)
+  end
+end
+
+
+@3次ベジェ曲線
+--track0:始制X,-500,500,0
+--track1:始制Y,-500,500,-100
+--track2:終制X,-500,500,0
+--track3:終制Y,-500,500,-100
+--dialog:始制Z,sza=0;終制Z,szb=0;補助線表示/chk,se=1;制御点色/col,color=0xff0000;
+obj.effect()
+--始点
+x0=obj.getvalue("x",0)
+y0=obj.getvalue("y",0)
+z0=obj.getvalue("z",0)
+xa=x0-obj.getvalue("x",obj.time)
+ya=y0-obj.getvalue("y",obj.time)
+za=z0-obj.getvalue("z",obj.time)
+
+--終点
+x1=obj.getvalue("x",obj.totaltime)
+y1=obj.getvalue("y",obj.totaltime)
+z1=obj.getvalue("z",obj.totaltime)
+xb=x1-obj.getvalue("x",obj.time)
+yb=y1-obj.getvalue("y",obj.time)
+zb=z1-obj.getvalue("z",obj.time)
+
+--制御点
+sxa=obj.track0
+sya=obj.track1
+sxb=obj.track2
+syb=obj.track3
+
+--座標の計算
+t=obj.time/obj.totaltime
+obj.ox=((1-t)^3)*xa+3*t*((1-t)^2)*(sxa+xa)+3*(t^2)*(1-t)*(sxb+xb)+(t^3)*xb
+obj.oy=((1-t)^3)*ya+3*t*((1-t)^2)*(sya+ya)+3*(t^2)*(1-t)*(syb+yb)+(t^3)*yb
+obj.oz=((1-t)^3)*za+3*t*((1-t)^2)*(sza+za)+3*(t^2)*(1-t)*(szb+zb)+(t^3)*zb
+obj.draw()
+
+--補助線
+if(se==1) then
+  a=1/2
+  obj.setoption("billboard",3)
+  obj.load("figure","円",color,50)
+  obj.draw(xa,ya,za,1,a)
+  obj.draw(xb,yb,zb,1,a)
+  obj.setoption("billboard",3)
+  obj.load("figure","四角形",color,50)
+  obj.draw(xa+sxa,ya+sya,za+sza,1,a)
+  obj.draw(xb+sxb,yb+syb,zb+szb,1,a)
+  obj.setoption("billboard",3)
+  obj.load("figure","円",color,10)
+  n=20
+  for i=0,n-1 do
+    t=i/n
+    x=((1-t)^3)*xa+3*t*((1-t)^2)*(sxa+xa)+3*(t^2)*(1-t)*(sxb+xb)+(t^3)*xb
+    y=((1-t)^3)*ya+3*t*((1-t)^2)*(sya+ya)+3*(t^2)*(1-t)*(syb+yb)+(t^3)*yb
+    z=((1-t)^3)*za+3*t*((1-t)^2)*(sza+za)+3*(t^2)*(1-t)*(szb+zb)+(t^3)*zb
+    obj.draw(x,y,z,1,a)
+  end
+end
+
+@グループ制御もどき(親)
+--track0:透明度2,0,100,0
+--track1:角度,-720,720,0
+--track2:回転軸,0,2,0,1
+jiku=obj.track2
+obj.load("figure","四角形",0xffffff,1)
+obj.drawpoly(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+x=obj.getvalue("x")
+y=obj.getvalue("y")
+z=obj.getvalue("z")
+zoom=obj.getvalue("zoom")/100
+alpha=1-obj.getvalue(0)/100
+r=obj.getvalue(1)
+
+@グループ制御もどき(子)
+if(jiku<1) then
+  l_rz=math.sqrt(obj.getvalue("x")^2+obj.getvalue("y")^2)*zoom
+  r_rz=math.atan2(obj.getvalue("y"),obj.getvalue("x"))
+  obj.ox=obj.ox+x+l_rz*(math.cos(r*math.pi/180+r_rz))-obj.getvalue("x")
+  obj.oy=obj.oy+y+l_rz*(math.sin(r*math.pi/180+r_rz))-obj.getvalue("y")
+  obj.oz=obj.oz+z+(zoom-1)*obj.getvalue("z")
+  obj.rz=r
+elseif(jiku<2) then
+  l_ry=math.sqrt(obj.getvalue("x")^2+obj.getvalue("z")^2)*zoom
+  r_ry=math.atan2(obj.getvalue("z"),obj.getvalue("x"))
+  obj.ox=obj.ox+x+l_ry*(math.cos(-r*math.pi/180+r_ry))-obj.getvalue("x")
+  obj.oy=obj.oy+y+(zoom-1)*obj.getvalue("y")
+  obj.oz=obj.oz+z+l_ry*(math.sin(-r*math.pi/180+r_ry))-obj.getvalue("z")
+  obj.ry=r
+else
+  l_rx=math.sqrt(obj.getvalue("y")^2+obj.getvalue("z")^2)*zoom
+  r_rx=math.atan2(obj.getvalue("z"),obj.getvalue("y"))
+  obj.ox=obj.ox+x+(zoom-1)*obj.getvalue("x")
+  obj.oy=obj.oy+y+l_rx*(math.cos(r*math.pi/180+r_rx))-obj.getvalue("y")
+  obj.oz=obj.oz+z+l_rx*(math.sin(r*math.pi/180+r_rx))-obj.getvalue("z")
+  obj.rx=r
+end
+obj.zoom=zoom
+obj.alpha=alpha
+
+@色ずれ分解
+--track0:RGB,0,2,0,1
+--track1:濃さ[%],0,300,300
+zoom=obj.getvalue("zoom")/100
+w=obj.w/zoom
+h=obj.h/zoom
+obj.setoption("dst","tmp",w*3,h)
+obj.effect("色ずれ","ずれ幅",w,"角度",-90,"type",1)
+obj.draw()
+obj.load("tempbuffer",w*obj.track0,0,w,h)
+obj.alpha=obj.alpha*obj.track1/100
+
+@ランダム複数回転
+--track0:個数,1,50,5,1
+--track1:回転速度,0,800,100
+--track2:回転範囲,0,800,100
+--track3:拡大範囲,0,100,100
+obj.effect()
+n=obj.track0
+v=obj.track1/100
+rv=obj.track2
+ms=obj.track3
+for i=0,n-1 do
+  s=obj.rand(ms,100,i,6)/100
+  rx=obj.rand(0,360,i,0)+obj.rand(-rv,rv,i,3)*obj.time*v
+  ry=obj.rand(0,360,i,1)+obj.rand(-rv,rv,i,4)*obj.time*v
+  rz=obj.rand(0,360,i,2)+obj.rand(-rv,rv,i,5)*obj.time*v
+  obj.draw(0,0,0,s,1,rx,ry,rz)
+end
+
+@円形並べ_レイヤーA
+--track0:個数,0,100,6,1
+--track1:距離,0,2000,200
+--track2:拡大率,0,800,100
+--track3:回転,-720,720,0
+--check0:外向き,0
+n=obj.track0
+l=obj.track1
+s=obj.track2/100
+k=obj.track3
+lay=obj.layer
+soto=0
+r=360*(obj.layer-lay)/n+k
+obj.ox=math.sin(r*math.pi/180)*l*s
+obj.oy=-math.cos(r*math.pi/180)*l*s
+obj.zoom=obj.zoom*s
+obj.rz=r
+if(obj.check0) then
+  obj.ox=-obj.ox
+  obj.rz =-obj.rz-180
+  soto=1
+end
+x=obj.x
+y=obj.y
+z=obj.z
+
+@円形並べ_レイヤーB
+r=360*(obj.layer-lay)/n+k
+obj.ox=math.sin(r*math.pi/180)*l*s+x
+obj.oy=-math.cos(r*math.pi/180)*l*s+y
+obj.oz=z
+obj.zoom=obj.zoom*s
+obj.rz=r
+if(soto==1) then
+  obj.ox=-obj.ox
+  obj.rz =-obj.rz-180
+end
+
+@円形-カメラ_レイヤーA
+--track0:個数,0,100,6,1
+--track1:距離,-20000,20000,500
+--track2:拡大率,0,800,100
+--track3:回転,-720,720,0
+n=obj.track0
+l=obj.track1
+s=obj.track2/100
+k=obj.track3
+lay=obj.layer
+r=360*(obj.layer-lay)/n+k
+obj.ox=math.sin(r*math.pi/180)*l*s
+obj.oz=-math.cos(r*math.pi/180)*l*s
+obj.zoom=obj.zoom*s
+x=obj.x
+y=obj.y
+z=obj.z
+
+@円形-カメラ_レイヤーB
+r=360*(obj.layer-lay)/n+k
+obj.ox=math.sin(r*math.pi/180)*l*s+x
+obj.oy=y
+obj.oz=-math.cos(r*math.pi/180)*l*s+z
+obj.zoom=obj.zoom*s
+
+@カメラ深度ぼけPlus
+--track0:範囲,0,1000,50,1
+--track1:Z基準,-20000,20000,0
+--track2:最大値,0,1000,300,1
+--dialog:奥をぼかす/chk,oku=1;手前をぼかす/chk,mae=1;
+if(obj.z>obj.track1) then
+  l=(obj.z-obj.track1)/10000*oku
+else
+  l=(obj.track1-obj.z)/10000*mae
+end
+l=math.min(l*obj.track0,obj.track2)
+obj.effect("ぼかし","範囲",l)
+
+@ハーフトーン風
+--track0:サイズ,5,200,50
+--track1:size閾値,0,100,50
+--track2:透明閾値,0,100,50
+--track3:回転,-720,720,0
+--dialog:図形(種類)/fig,fig="円";色(負の値で元色)/col,col=0xffffff;反転/chk,han=0;サイズ二値化/chk,nt=0;透明二値化/chk,nta=0;個別拡大[%],ss=100;文字/chk,tex=0;文字(文字),text="＋";文字(font),font="MS UI Gothic";
+obj.effect("反転","輝度反転",han)
+w=obj.w*100/obj.getvalue("zoom")
+h=obj.h*100/obj.getvalue("zoom")
+s=math.min(obj.track0,w,h)
+si=obj.track1/100
+sia=obj.track2/100
+rr=obj.track3
+x={};y={};k={};a={};o_col={};idx=0;
+
+nx=math.floor(w/s/2)
+ny=math.floor(h/s/2)
+for j=-ny-1,ny do
+  dot_y=h/2+(j+0.5)*s
+  y0=j*s
+  for i=-nx-1,nx do
+    dot_x=w/2+(i+0.5)*s
+    x0=i*s
+    kido,cb,cr,alp=obj.getpixel(dot_x,dot_y,"yc")
+    color2=obj.getpixel(dot_x,dot_y,"col")
+    idx=idx+1; x[idx]=x0; y[idx]=y0; k[idx]=kido; o_col[idx]=color2; a[idx]=alp;
+  end
+end
+
+obj.setoption("dst","tmp",w,h)
+for i=1,idx do
+  if(nt<1) then
+    sk=math.min(k[i]/4096,1)
+  elseif(k[i]>=4096*si) then
+    sk=1
+  else
+    sk=0
+  end
+
+  if(nta<1) then
+    aa=math.min(a[i]/4096,1)
+  elseif(a[i]>=4096*sia) then
+    aa=1
+  else
+    aa=0
+  end
+
+  if(sk>0 and aa>0) then    
+    if(col<0) then
+      col0=o_col[i]
+    else
+      col0=col
+    end
+
+    if(tex<1) then
+      obj.load("figure",fig,col0,s*sk)
+    else
+      obj.setfont(font,s*sk,0,col0)
+      obj.load("text",text)
+    end
+
+    obj.draw(x[i]+s/2,y[i]+s/2,0,ss/100,aa,0,0,rr)
+  end
+end
+obj.load("tempbuffer")
+
+@ハチの巣
+--track0:X間隔,-1000,1000,100
+--track1:Y間隔,-1000,1000,100
+--track2:X個数,1,100,5,1
+--track3:Y個数,1,100,3,1
+obj.effect()
+nx=obj.track2
+ny=obj.track3
+gx=obj.track0/100-(1-math.cos(math.pi*30/180))
+gy=obj.track1/100-(1-math.sin(math.pi*30/180)*1.5)
+w=obj.w
+h=obj.h
+for j=0,ny-1 do
+  y0=-(ny+(ny-1)*(gy-1))*h/2 + h*j*gy
+  y2=-(ny+(ny-1)*(gy-1))*h/2 + h*(j*gy+1)
+  for i=0,nx-1 do
+    x0=-(nx+(nx-1)*(gx-1))*w/2 + w*i*gx
+    x1=-(nx+(nx-1)*(gx-1))*w/2 + w*(i*gx+1)
+    if(j%2==0) then
+      x0=x0+w/2*gx
+      x1=x1+w/2*gx
+    end
+    obj.drawpoly(x0,y0,0,x1,y0,0,x1,y2,0,x0,y2,0, 0,0,w,0,w,h,0,h)      
+  end
+end
+
+@移動トレース
+--track0:個数,1,500,10,1
+--track1:時間差[s],0,3,0.1,0.01
+--track2:終時間[s],0,30,0,0.01
+obj.effect()
+n=obj.track0
+t=obj.track1
+f=obj.track2
+for i=0,n-1 do
+  if(obj.time<=t*i) then
+    x=0 y=0 z=0 alpha=0
+  elseif(obj.time>=obj.totaltime-f+t*i) then
+    x=0 y=0 z=0 alpha=0
+  else
+    x=obj.getvalue("x",obj.time-t*i)-obj.getvalue("x")
+    y=obj.getvalue("y",obj.time-t*i)-obj.getvalue("y")
+    z=obj.getvalue("z",obj.time-t*i)-obj.getvalue("z")
+    alpha=1
+  end
+  obj.draw(x,y,z,1,alpha)
+end
+
+@カクカクさん
+--track0:間隔[s],0,5,0.5,0.01
+t=math.floor(obj.time/obj.track0)*obj.track0
+obj.ox=obj.getvalue("x",t)-obj.getvalue("x",obj.time)
+obj.oy=obj.getvalue("y",t)-obj.getvalue("y",obj.time)
+obj.oz=obj.getvalue("z",t)-obj.getvalue("z",obj.time)
+obj.zoom=obj.zoom+(obj.getvalue("zoom",t)-obj.getvalue("zoom",obj.time))/100
+obj.rx=obj.getvalue("rx",t)-obj.getvalue("rx",obj.time)
+obj.ry=obj.getvalue("ry",t)-obj.getvalue("ry",obj.time)
+obj.rz=obj.getvalue("rz",t)-obj.getvalue("rz",obj.time)
+
+@透明度ランダム変化
+--track0:X間隔,-1000,1000,100
+--track1:Y間隔,-1000,1000,100
+--track2:X個数,1,100,5,1
+--track3:Y個数,1,100,3,1
+--dialog:間隔[s],f=0.5;透明最小値[%],m=0;
+nx=obj.track2
+ny=obj.track3
+gx=obj.track0/100
+gy=obj.track1/100
+w=obj.w
+h=obj.h
+w_size=(nx+(nx-1)*(gx-1))*w
+h_size=(ny+(ny-1)*(gy-1))*h
+obj.setoption("dst","tmp",w_size,h_size)
+for j=0,ny-1 do
+  y0=-h_size/2 + h*j*gy
+  y2=-h_size/2 + h*(j*gy+1)
+  for i=0,nx-1 do
+    x0=-w_size/2 + w*i*gx
+    x1=-w_size/2 + w*(i*gx+1)
+    ran=obj.rand(0,100,j,i)
+    alp=obj.rand(m,100,ran,ran+math.floor(obj.time/f))/100
+    obj.drawpoly(x0,y0,0,x1,y0,0,x1,y2,0,x0,y2,0, 0,0,obj.w,0,obj.w,obj.h,0,obj.h ,alp)      
+  end
+end
+obj.load("tempbuffer")
+
+@ランダム明滅
+--track0:X間隔,-1000,1000,100
+--track1:Y間隔,-1000,1000,100
+--track2:X個数,1,100,5,1
+--track3:Y個数,1,100,3,1
+--dialog:明滅最大[s],max=5;明滅最小[s],min=1;開始位置[s],f=3;閾値[%],s=0;
+nx=obj.track2
+ny=obj.track3
+gx=obj.track0/100
+gy=obj.track1/100
+w=obj.w
+h=obj.h
+w_size=(nx+(nx-1)*(gx-1))*w
+h_size=(ny+(ny-1)*(gy-1))*h
+obj.setoption("dst","tmp",w_size,h_size)
+for j=0,ny-1 do
+  y0=-h_size/2 + h*j*gy
+  y2=-h_size/2 + h*(j*gy+1)
+  for i=0,nx-1 do
+    x0=-w_size/2 + w*i*gx
+    x1=-w_size/2 + w*(i*gx+1)
+    t=obj.rand(min*1000,max*1000,j,i)/1000
+    alp=math.cos(2*math.pi*(obj.time+f)*(1/t))*(0.5+0.5*s/100)+0.5-0.5*s/100
+    obj.drawpoly(x0,y0,0,x1,y0,0,x1,y2,0,x0,y2,0, 0,0,obj.w,0,obj.w,obj.h,0,obj.h ,alp)      
+  end
+end
+obj.load("tempbuffer")
+
+@ランダム明滅2
+--track0:個数,0,1000,5,1
+--track1:範囲,0,1000,100
+--track2:移動速度,0,1000,0
+--track3:回転速度,0,1000,0
+--dialog:明滅最大[秒],max=5;明滅最小[秒],min=1;開始位置[秒],f=3;閾値[%],si=0;X軸範囲[%],wx=100;Y軸範囲[%],wy=100;Z軸範囲[%],wz=0;X回転/chk,kx=0;Y回転/chk,ky=0;Z回転/chk,kz=1;拡大最小[-%],s_min=0;
+obj.effect()
+n=obj.track0  --個数
+w=obj.track1/100  --範囲
+v=obj.track2/100  --移動速度
+r=obj.track3/100  --回転速度
+for i=0,n-1 do
+  x=(obj.rand(-obj.screen_w-obj.w,obj.screen_w+obj.w,i,0)/2*w + obj.rand(-100,100,i,3)*obj.time*v)*wx/100
+  y=(obj.rand(-obj.screen_h-obj.h,obj.screen_h+obj.h,i,1)/2*w + obj.rand(-100,100,i,4)*obj.time*v)*wy/100
+  z=(obj.rand(-obj.screen_w-obj.w,obj.screen_w+obj.w,i,2)/2*w + obj.rand(-100,100,i,5)*obj.time*v)*wz/100
+  s=obj.rand(100-s_min,100,i,6)/100
+  rx=(obj.rand(0,360,i,7) + obj.rand(-100,100,i,10)*obj.time*r)*kx
+  ry=(obj.rand(0,360,i,8) + obj.rand(-100,100,i,11)*obj.time*r)*ky
+  rz=(obj.rand(0,360,i,9) + obj.rand(-100,100,i,12)*obj.time*r)*kz
+  t=obj.rand(min*1000,max*1000,0,i)/1000
+  alp=math.cos(2*math.pi*(obj.time+f)*(1/t))*(0.5+0.5*si/100)+0.5-0.5*si/100
+  obj.draw(x,y,z,s,alp,rx,ry,rz)
+end
+
+@ループANM
+--track0:ループ[s],0,20,1,0.01
+--track1:待機[s],0,20,0.2,0.01
+--track2:拡大+%,-100,800,50
+--track3:縦横比,-100,100,0
+--dialog:X,x=0;Y,y=0;Z,z=0;X軸回転,rx=0;Y軸回転,ry=0;Z軸回転,rz=0;開始位置[s],f=0;待機2回/chk,wait=0;
+t=obj.track0
+w=math.min(obj.track1,t)
+r=0
+time0=(math.max(obj.time-f,0))%t
+if(wait==0) then
+  if(time0<=t-w and time0~=0) then
+    r=math.sin(math.pi*(time0)/(t-w))
+  end
+else
+  time1=(math.max(obj.time-f,0))%(2*t)
+  if(time1<=t-w) then
+    r=math.sin(math.pi*time0/(t-w)/2)
+  elseif(time1<=t) then
+    r=1
+  elseif(time1<=2*t-w) then
+    r=1-math.sin(math.pi*time0/(t-w)/2)
+  end
+end
+obj.ox=obj.ox+x*r
+obj.oy=obj.oy+y*r
+obj.oz=obj.oz+z*r
+obj.zoom=obj.zoom*(1+obj.track2/100*r)
+obj.aspect=obj.aspect+obj.track3/100*r
+obj.rx=obj.rx+rx*r
+obj.ry=obj.ry+ry*r
+obj.rz=obj.rz+rz*r
+
+@TVオンオフ
+--track0:時間,-5,5,-1,0.01
+--track1:走査幅,1,100,2
+--track2:縁調整%,100,800,110
+--track3:影速度,-1000,1000,100
+--dialog:縁あり/chk,edg=1;縁アス比/chk,as=1;走査線あり/chk,sou=1;走査線強さ[%],sou_alp=50;走査線色/col,sou_col=0x000000;影あり/chk,kage=1;影の幅,kage_haba=80;白線の幅,senhaba=2;
+t=obj.track0
+l=obj.track1
+ensize=obj.track2
+zoom=obj.getvalue("zoom")/100
+h=obj.h/zoom
+w=obj.w/zoom
+kage_v=obj.track3
+
+if(t==0) then
+  i=0
+elseif(t<0) then
+  i=(t+obj.totaltime-obj.time)/t
+else
+  i=(t-obj.time)/t
+end
+i=math.max(i,0)
+
+if(i<6/9) then
+  obj.setoption("drawtarget","tempbuffer",w,h)
+  obj.draw()
+
+  --走査線の描画
+  if(sou==1) then
+    obj.setoption("blend",5)
+    obj.load("figure","四角形",sou_col,2)
+    n=math.floor(h/l/2)
+    for i=0,n do
+      x0=-w/2
+      x1= w/2
+      y0=-h/2+2*l*i
+      y2=-h/2+l+2*l*i
+      obj.drawpoly(x0,y0,0,x1,y0,0,x1,y2,0,x0,y2,0, 0,0,1,0,1,1,0,1, sou_alp/100)
+    end
+  end
+
+  obj.setoption("blend",0)
+  --横影の描画
+  if(kage==1) then
+    obj.load("figure","四角形",0x000000,w)
+    obj.effect("斜めクリッピング","幅",kage_haba,"ぼかし",20)
+    obj.draw(0,h/2-(kage_v*obj.time)%(h+80*2),0,1,0.4)
+  end
+
+  --縁の描画
+  if(edg==1) then
+    ss=50
+    obj.load("figure","四角形",0x000000,ss*2)
+    obj.effect("マスク","type",1,"サイズ",ss,"マスクの反転",1)
+    obj.effect("ぼかし","範囲",10,"サイズ固定",1)
+    w=w*ensize/100
+    h=h*ensize/100
+    if(as==0) then
+      h=w
+    end
+    obj.drawpoly(-w/2,-h/2,0,w/2,-h/2,0,w/2,h/2,0,-w/2,h/2,0, ss/2,ss/2,ss*3/2,ss/2,ss*3/2,ss*3/2,ss/2,ss*3/2)
+  end
+
+  --全体を描画
+  obj.load("tempbuffer")
+
+  --登場・退場時のモーション
+  function HNK(i,sti,edi,stval,edval)
+    val=stval+(edval-stval)*(sti-i)/(sti-edi)
+    return val
+  end
+
+  if(i>0) then
+    if(i>5/9) then
+      xscale=HNK(i,6/9,5/9,0.7,0.3)
+      yscale=HNK(i,6/9,5/9,0.35,1)
+      obj.effect("色調補正","明るさ",HNK(i,6/9,5/9,150,120))
+    elseif(i>3/9) then
+      xscale=HNK(i,5/9,3/9,0.3,0.6)
+      yscale=HNK(i,5/9,3/9,1,0.6)
+      obj.effect("色調補正","明るさ",HNK(i,5/9,3/9,120,100))
+    elseif(i>0) then
+      xscale=HNK(i,3/9,0,0.6,0.8)
+      yscale=HNK(i,3/9,0,0.6,1)
+    end
+
+    obj.zoom=math.max(xscale,yscale)
+    if(xscale>yscale) then
+      obj.aspect=obj.aspect+yscale/xscale-1
+    else
+      obj.aspect=obj.aspect+1-xscale/yscale
+    end
+  end
+
+else
+  --白線の描画
+  obj.load("figure","四角形",0xffffff,w)
+  obj.effect("斜めクリッピング","幅",senhaba,"ぼかし",0)
+  obj.effect("斜めクリッピング","角度",90,"幅",10+w*(1-i)*9/4,"ぼかし",50)
+  obj.draw()
+end
+
+@蝶
+--track0:羽ばたき,0,500,100
+--track1:角度,0,180,120
+--track2:上下,0,200,30
+--track3:羽(手動),-720,720,0
+obj.effect()
+r=math.sin(math.pi*2*obj.time*obj.track0/100)
+f=(obj.track1*r+obj.track3)*math.pi/180
+x=-obj.w/2*(1+math.cos(f))/2
+z=-obj.w/2*math.sin(f/2)
+obj.oy=r*obj.track2
+obj.rx=-30
+w=obj.w/2
+h=obj.h/2
+obj.drawpoly(x,-h,z, 0,-h,0, 0,h,0,x,h,z, 0,0,  w,0,  w,h*2,0,h*2)
+obj.drawpoly(0,-h,0,-x,-h,z,-x,h,z,0,h,0, w,0,w*2,0,w*2,h*2,w,h*2)
+
+@カード表裏
+--file:
+obj.effect()
+obj.draw()
+obj.setoption("culling",1)
+obj.load(file)
+obj.effect()
+obj.draw(0,0,0,1,1,0,180,-obj.getvalue("rz")*2)
+
+@ランダム配置表裏(A)
+--track0:個数,0,1000,5,1
+--track1:範囲,0,1000,100
+--track2:移動速度,0,1000,0
+--track3:回転速度,0,1000,0
+--dialog:X軸範囲[%],wx=100;Y軸範囲[%],wy=100;Z軸範囲[%],wz=0;X回転/chk,kx=0;Y回転/chk,ky=0;Z回転/chk,kz=1;拡大最小[-%],s_min=0;
+n=obj.track0  --個数
+w=obj.track1/100  --範囲
+v=obj.track2/100  --移動速度
+r=obj.track3/100  --回転速度
+
+@ランダム配置表裏(B)
+--track0:裏反転,0,1,0,1
+--file:
+obj.effect()
+for i=0,n-1 do
+  x=(obj.rand(-obj.screen_w-obj.w,obj.screen_w+obj.w,-1-i,0)/2*w + obj.rand(-100,100,-1-i,3)*obj.time*v)*wx/100
+  y=(obj.rand(-obj.screen_h-obj.h,obj.screen_h+obj.h,-1-i,1)/2*w + obj.rand(-100,100,-1-i,4)*obj.time*v)*wy/100
+  z=(obj.rand(-obj.screen_w-obj.w,obj.screen_w+obj.w,-1-i,2)/2*w + obj.rand(-100,100,-1-i,5)*obj.time*v)*wz/100
+  s=obj.rand(100-s_min,100,-1-i,6)/100
+  rx=(obj.rand(0,360,-1-i,7) + obj.rand(-100,100,-1-i,10)*obj.time*r)*kx
+  ry=(obj.rand(0,360,-1-i,8) + obj.rand(-100,100,-1-i,11)*obj.time*r)*ky
+  rz=(obj.rand(0,360,-1-i,9) + obj.rand(-100,100,-1-i,12)*obj.time*r)*kz
+  obj.draw(x,y,z,s,1,rx,ry,rz)
+end
+
+obj.setoption("culling",1)
+obj.load(file)
+obj.effect("反転","左右反転",obj.track0)
+obj.effect()
+for i=0,n-1 do
+  x=(obj.rand(-obj.screen_w-obj.w,obj.screen_w+obj.w,-1-i,0)/2*w + obj.rand(-100,100,-1-i,3)*obj.time*v)*wx/100
+  y=(obj.rand(-obj.screen_h-obj.h,obj.screen_h+obj.h,-1-i,1)/2*w + obj.rand(-100,100,-1-i,4)*obj.time*v)*wy/100
+  z=(obj.rand(-obj.screen_w-obj.w,obj.screen_w+obj.w,-1-i,2)/2*w + obj.rand(-100,100,-1-i,5)*obj.time*v)*wz/100
+  s=obj.rand(100-s_min,100,-1-i,6)/100
+  rx=(obj.rand(0,360,-1-i,7) + obj.rand(-100,100,-1-i,10)*obj.time*r)*kx
+  ry=(obj.rand(0,360,-1-i,8) + obj.rand(-100,100,-1-i,11)*obj.time*r)*ky
+  rz=(obj.rand(0,360,-1-i,9) + obj.rand(-100,100,-1-i,12)*obj.time*r)*kz
+  obj.draw(x,y,z,s,1,rx,ry+180,-rz-obj.getvalue("rz")*2)
+end
+
+@パーティクル表裏(A)
+--track0:頻度,0.1,500,10
+--track1:距離,1,10000,500
+--track2:速度,1,2000,400
+--track3:方向,-360,360,0
+--dialog:ランダム方向[度],dir_ran=30;透過速度[%],av=100;拡大速度[%],sv=0;ランダム速度[-%],v_ran=0;ランダム拡大[-%],s_ran=0;ランダムZ角度[度],rz_ran=0;X軸ランダム,x_ran=0;Y軸ランダム,y_ran=0;Z軸ランダム,z_ran=0;回転速度[度],rv_ran=0;XY回転あり/chk,rxy_ran=0;Z軸ランダム方向,zi_ran=0;
+b=1/obj.track0      --出力間隔(秒)
+l=obj.track1        --距離
+v=l/obj.track2      --距離を進むのにかかる時間
+dir=-obj.track3+90  --出力方向
+
+@パーティクル表裏(B)
+--track0:裏反転,0,1,0,1
+--file:
+obj.effect()
+n=obj.totaltime/b
+for i=0,n-1 do
+  t=(v-obj.time+i*b)/v
+  t=math.min(1,math.max(t,0))
+  direct=obj.rand(dir-dir_ran/2,dir+dir_ran/2,i,0)
+  x=   l*math.cos(direct*math.pi/180)*(1-t)*obj.rand(100-v_ran,100,-1-i,12)/100+obj.rand(-x_ran/2,x_ran/2,-1-i,1)
+  y=   l*math.sin(direct*math.pi/180)*(1-t)*obj.rand(100-v_ran,100,-1-i,12)/100+obj.rand(-y_ran/2,y_ran/2,-1-i,2)
+  z=obj.rand(-zi_ran/2,zi_ran/2,-1-i,11)*(1-t)*obj.rand(100-v_ran,100,-1-i,12)/100+obj.rand(-z_ran/2,z_ran/2,-1-i,3)
+  zoom=1+sv/100*(1-t)-obj.rand(0,s_ran,-1-i,10)/100
+  alpha=1-av/100*(1-t)
+  rx=rxy_ran*(obj.rand(0,360,-1-i,4)    +obj.rand(-rv_ran/2,rv_ran/2,-1-i,7)*obj.time)
+  ry=rxy_ran*(obj.rand(0,360,-1-i,5)    +obj.rand(-rv_ran/2,rv_ran/2,-1-i,8)*obj.time)
+  rz=obj.rand(-rz_ran/2,rz_ran/2,-1-i,6)+obj.rand(-rv_ran/2,rv_ran/2,-1-i,9)*obj.time
+  if(t==0 or t==1) then
+    alpha=0
+  end
+  obj.draw(x,y,z,zoom,alpha,rx,ry,rz)
+end
+
+obj.setoption("culling",1)
+obj.load(file)
+obj.effect("反転","左右反転",obj.track0)
+obj.effect()
+for i=0,n-1 do
+  t=(v-obj.time+i*b)/v
+  t=math.min(1,math.max(t,0))
+  direct=obj.rand(dir-dir_ran/2,dir+dir_ran/2,i,0)
+  x=   l*math.cos(direct*math.pi/180)*(1-t)*obj.rand(100-v_ran,100,-1-i,12)/100+obj.rand(-x_ran/2,x_ran/2,-1-i,1)
+  y=   l*math.sin(direct*math.pi/180)*(1-t)*obj.rand(100-v_ran,100,-1-i,12)/100+obj.rand(-y_ran/2,y_ran/2,-1-i,2)
+  z=obj.rand(-zi_ran/2,zi_ran/2,-1-i,11)*(1-t)*obj.rand(100-v_ran,100,-1-i,12)/100+obj.rand(-z_ran/2,z_ran/2,-1-i,3)
+  zoom=1+sv/100*(1-t)-obj.rand(0,s_ran,-1-i,10)/100
+  alpha=1-av/100*(1-t)
+  rx=rxy_ran*(obj.rand(0,360,-1-i,4)    +obj.rand(-rv_ran/2,rv_ran/2,-1-i,7)*obj.time)
+  ry=rxy_ran*(obj.rand(0,360,-1-i,5)    +obj.rand(-rv_ran/2,rv_ran/2,-1-i,8)*obj.time)
+  rz=obj.rand(-rz_ran/2,rz_ran/2,-1-i,6)+obj.rand(-rv_ran/2,rv_ran/2,-1-i,9)*obj.time
+  if(t==0 or t==1) then
+    alpha=0
+  end
+  obj.draw(x,y,z,zoom,alpha,rx,ry+180,-rz-obj.getvalue("rz")*2)
+end
+
+@切れ込み
+--track0:深さ,1,500,60
+--track1:角度調整,-360,360,10
+--track2:切込数,2,50,8,1
+sizew=obj.w/obj.getvalue("zoom")*100
+sizeh=obj.h/obj.getvalue("zoom")*100
+obj.setoption("dst","tmp",sizew,sizeh)
+obj.effect("斜めクリッピング","中心Y",obj.track0,"角度",obj.track1)
+obj.effect("斜めクリッピング","中心Y",-obj.track0,"角度",180-obj.track1)
+obj.effect("斜めクリッピング","角度",270)
+n=math.floor(obj.track2/2)*2
+for i=0,n-1 do
+  obj.draw(0,0,0,1,1,0,0,360/n*i)
+end
+obj.load("tempbuffer")
+
+@もっと!?斜めクリッピング
+--track0:個数,0,100,8,1
+--track1:幅,0,1000,10,1
+--track2:角度,-720,720,0
+--dialog:中心X,x=0;中心Y,y=0;
+n=math.floor(obj.track0/2)
+if(obj.track1>0) then
+  for i=0,n-1 do
+    obj.effect("斜めクリッピング","中心X",x,"中心Y",y,"角度",180/n*i+obj.track2,"幅",-obj.track1)
+  end
+end
+
+@斜めクリッピングEX
+--track0:個数,1,100,3,1
+--track1:幅,0,2000,20,1
+--track2:増加範囲,0,300,0
+--track3:乱数,0,100,0,1
+n=obj.track0
+f=obj.track3
+if(obj.track1>=1) then
+  for i=0,n-1 do
+    haba=obj.track1*obj.rand(100,obj.track2+100,i,f+3)/100
+    r=obj.rand(0,180,i,f)
+    cx=obj.rand(-obj.w,obj.w,i,f+1)/2
+    cy=obj.rand(-obj.h,obj.h,i,f+2)/2
+    obj.effect("斜めクリッピング","中心X",cx,"中心Y",cy,"角度",r,"幅",-haba)
+  end
+end
+
+@引き伸ばし
+--track0:伸度,0,800,0
+--track1:幅[%],0.1,100,10
+--track2:基準[%],-100,100,0
+--track3:中心[%],-100,100,0
+--dialog:縦方向/chk,dir=0;幅部分を表示/chk,alp=0;
+obj.effect()
+w=obj.w/2
+h=obj.h/2
+if(dir<1) then
+  natto=obj.w*obj.track0/100
+  haba=obj.w*obj.track1/100
+  c=(obj.w-haba)/2*obj.track2/100
+  t=natto*obj.track3/100
+
+  c0=c-haba/2-natto+t
+  c1=c+haba/2+natto+t
+  x0=-w-natto+t
+  x1= w+natto+t
+  u0=w+c-haba/2
+  u1=w+c+haba/2
+  obj.drawpoly(x0,-h,0,c0+1,-h,0,c0+1,h,0,x0,h,0, 0,0,u0+1,0,u0+1,h*2,0,h*2)
+  obj.drawpoly(c1-1,-h,0,x1,-h,0,x1,h,0,c1-1,h,0, u1-1,0,w*2,0,w*2,h*2,u1-1,h*2)
+  obj.drawpoly(c0,-h,0,c1,-h,0,c1,h,0,c0,h,0, u0,0,u1,0,u1,h*2,u0,h*2,1-alp/2)
+else
+  natto=obj.h*obj.track0/100
+  haba=obj.h*obj.track1/100
+  c=(obj.h-haba)/2*obj.track2/100
+  t=natto*obj.track3/100
+
+  c0=c-haba/2-natto+t
+  c1=c+haba/2+natto+t
+  y0=-h-natto+t
+  y1= h+natto+t
+  v0=h+c-haba/2
+  v1=h+c+haba/2
+  obj.drawpoly(-w,y0,0,w,y0,0,w,c0+1,0,-w,c0+1,0, 0,0,w*2,0,w*2,v0+1,0,v0+1)
+  obj.drawpoly(-w,c1-1,0,w,c1-1,0,w,y1,0,-w,y1,0, 0,v1-1,w*2,v1-1,w*2,h*2,0,h*2)
+  obj.drawpoly(-w,c0,0,w,c0,0,w,c1,0,-w,c1,0, 0,v0,w*2,v0,w*2,v1,0,v1,1-alp/2)
+end
+
+@ドット絵立体化
+--track0:拡大率,0,8000,100
+--track1:Z幅,0,1000,100
+obj.effect()
+s=obj.track0/100
+w,h=obj.getpixel()
+for y=0,h-1 do
+for x=0,w-1 do
+
+col,a = obj.getpixel(x,y,"col")
+col,a_down = obj.getpixel(x,y+1,"col")
+col,a_up = obj.getpixel(x,y-1,"col")
+col,a_right = obj.getpixel(x+1,y,"col")
+col,a_left = obj.getpixel(x-1,y,"col")
+
+if(a==1) then
+  X=(x-w/2+0.5)*s
+  Y=(y-h/2+0.5)*s
+  Z=0*s
+  l=s/2
+  lz=s/2*obj.track1/100
+  ux=x+0.5
+  uy=y+0.5
+
+  obj.drawpoly(X-l,Y-l,Z-lz, X+l,Y-l,Z-lz, X+l,Y+l,Z-lz, X-l,Y+l,Z-lz, ux,uy, ux,uy, ux,uy, ux,uy)
+  obj.drawpoly(X+l,Y-l,Z+lz, X-l,Y-l,Z+lz, X-l,Y+l,Z+lz, X+l,Y+l,Z+lz, ux,uy, ux,uy, ux,uy, ux,uy)
+
+  if(y==h-1 or a_down~=1) then
+    obj.drawpoly(X-l,Y+l,Z-lz, X+l,Y+l,Z-lz, X+l,Y+l,Z+lz, X-l,Y+l,Z+lz, ux,uy, ux,uy, ux,uy, ux,uy)
+  end
+
+  if(y==0 or a_up~=1) then
+    obj.drawpoly(X+l,Y-l,Z-lz, X-l,Y-l,Z-lz, X-l,Y-l,Z+lz, X+l,Y-l,Z+lz, ux,uy, ux,uy, ux,uy, ux,uy)
+  end
+
+  if(x==w-1 or a_right~=1) then
+    obj.drawpoly(X+l,Y-l,Z-lz, X+l,Y-l,Z+lz, X+l,Y+l,Z+lz, X+l,Y+l,Z-lz, ux,uy, ux,uy, ux,uy, ux,uy)
+  end
+
+  if(x==0 or a_left~=1) then
+    obj.drawpoly(X-l,Y-l,Z+lz, X-l,Y-l,Z-lz, X-l,Y+l,Z-lz, X-l,Y+l,Z+lz, ux,uy, ux,uy, ux,uy, ux,uy)
+  end
+end
+end
+end
+
+@画像ループMOV_A
+--track0:X間隔,-1000,1000,100
+--track1:Y間隔,-1000,1000,100
+--track2:X個数,1,100,3,1
+--track3:Y個数,1,100,3,1
+--dialog:XY軸段違い/chk,yd=0;
+nx=obj.track2
+ny=obj.track3
+gx=obj.track0
+gy=obj.track1
+
+@画像ループMOV_B
+--track0:再生速度,0,800,100
+--track1:再生位置,0,300,0,0.01
+--file:
+v=obj.track0/100
+f=obj.track1
+tt=obj.load(file)
+for j=0,ny-1 do
+  y=-gy*(ny-1)/2 + j*gy
+  for i=0,nx-1 do
+    x=-gx*(nx-1)/2 + i*gx
+    if(yd==1 and j%2==0) then
+      x=x+gx/2
+    end
+    obj.load(file,(f+tt*obj.rand(0,100,i,j)/100+obj.time*v)%tt)
+    obj.effect()
+    obj.draw(x,y)
+  end
+end 

@@ -1,0 +1,65 @@
+--track0:éûä‘[s],-5,5,0.6,0.01
+--track1:ä‘äu[s],0,5,0.1,0.01
+--track2:ê®Ç¢,0,8,2.0,0.01
+--track3:ìoèÍèá,0,5,0,1
+--check0:É^ÉCÉv,0
+s=obj.track2
+jun=obj.track3
+
+if(jun<1) then
+  mode=obj.index --èáî‘Ç…ìoèÍ
+elseif(jun<2) then
+  mode=obj.num-1-obj.index --å„ÇÎÇ©ÇÁìoèÍ
+elseif(jun<3) then
+  local indexes = {}
+  for i=0,obj.num-1 do
+    indexes[i+1]=i
+  end
+  for i=0,obj.num-1 do
+    local dest = 0
+    dest=rand(0,obj.num-1, -obj.num,i+1)
+    local swap      = indexes[i+1]
+    indexes[i+1]    = indexes[dest+1]
+    indexes[dest+1] = swap
+  end
+  mode=indexes[obj.index+1] --ÉâÉìÉ_ÉÄèáÇ…ìoèÍ
+elseif(jun<4) then
+  mode=rand(0,100*(obj.num-1),obj.index,0)/100 --ÉâÉìÉ_ÉÄä‘äuÇ…ìoèÍ
+elseif(jun<5) then
+  mode=math.abs((obj.num-1)/2-obj.index) --ì‡ë§Ç©ÇÁìoèÍ
+else
+  mode=(obj.num-1)/2-math.abs((obj.num-1)/2-obj.index) --äOë§Ç©ÇÁìoèÍ
+end
+
+ta=obj.track0
+tb=obj.track1
+if(obj.check0) then
+  ta=obj.track0*(1-mode/obj.num)
+  tb=obj.track1/obj.num
+end
+
+if( ta < 0 ) then
+  i=(ta-obj.num*tb-obj.time+obj.totaltime+mode*tb)/ta
+else
+  i=(ta-obj.time+mode*tb)/ta
+end
+if( i > 0 ) then
+  if( i > 1 ) then
+    obj.alpha = 0
+    i = 1
+  end
+if( i >= 0 ) then
+	n = obj.track2*2+1
+	if( n <= 1 ) then
+		i = i*i
+	elseif( i > 1-1/n ) then
+		i = 1-(1-i)*n
+	else
+		i = i*n/(n-1)
+		i = math.sin((i-1)*(n-1)*math.pi)*i*0.4/(1+(1-i)*3)
+	end
+	obj.rx = obj.rx - 90*i
+	obj.oy = obj.oy + obj.h*(1-math.cos(i*math.pi/2))/2
+	obj.oz = obj.oz + obj.h*math.sin(i*math.pi/2)/2
+end
+end

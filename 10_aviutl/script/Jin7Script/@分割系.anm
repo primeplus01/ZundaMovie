@@ -1,0 +1,238 @@
+@両断
+--track0:切込角度,-360,360,120,0.1
+--track1:ズレ量,-1000,1000,100,0.1
+--track2:加速度,0,10,2,0.1
+--track3:移動開始,0,60,0,0.1
+--dialog:ズレタイプ,local type=0;中心X,local cenX=0;中心Y,local cenY=0;片方だけ透明[%],local fin_alpha=0;縁ぼかし,local bl=0;補助処理係数,local ad=0.5;縁ぼかし
+obj.effect()
+
+local	d_rz,adzm,rad,accel,start,move,alpha,t
+local	ax1,ay1,ax2,ay2,rev,adX,adY
+
+d_rz	=obj.getvalue("rz")
+adzm	=obj.getvalue("zoom")/100*ad
+rad	=obj.track0
+accel	=obj.track2
+start	=obj.track3
+t	=(obj.time-start)/(obj.totaltime-start)
+
+--■移動距離と時間----------------------------------------------
+if(obj.time>=start)then
+	move	=obj.track1*(t^accel)
+	alpha	=1-(fin_alpha/100)*t
+else
+	move	=0
+	alpha	=1
+end
+
+--■タイプ別移動変数処理----------------------------------------
+if(type==1)then		--<Type1:片方固定、離断>--------------
+	ax1	=(math.cos((rad+d_rz+90)*math.pi/180))*move
+	ay1	=(math.sin((rad+d_rz+90)*math.pi/180))*move
+	ax2	=0
+	ay2	=0
+elseif(type==2)then	--<Type2:両方移動、ズレ>--------------
+	ax1	=(math.cos((rad+d_rz)*math.pi/180))*move
+	ay1	=(math.sin((rad+d_rz)*math.pi/180))*move
+	ax2	=-ax1
+	ay2	=-ay1
+elseif(type==3)then	--<Type3:両方移動、離断>--------------
+	ax1	=(math.cos((rad+d_rz+90)*math.pi/180))*move
+	ay1	=(math.sin((rad+d_rz+90)*math.pi/180))*move
+	ax2	=-ax1
+	ay2	=-ay1
+elseif(type==4)then	--<Type4:速度違い、ズレ>--------------
+	ax1	=(math.cos((rad+d_rz)*math.pi/180))*move*2
+	ay1	=(math.sin((rad+d_rz)*math.pi/180))*move*2
+	ax2	=ax1/2
+	ay2	=ay1/2
+elseif(type==5)then	--<Type5:速度違い、離断>--------------
+	ax1	=(math.cos((rad+d_rz+90)*math.pi/180))*move*2
+	ay1	=(math.sin((rad+d_rz+90)*math.pi/180))*move*2
+	ax2	=ax1/2
+	ay2	=ay1/2
+else			--<Type0:片方固定、ズレ>--------------
+	ax1	=(math.cos((rad+d_rz)*math.pi/180))*move
+	ay1	=(math.sin((rad+d_rz)*math.pi/180))*move
+	ax2	=0
+	ay2	=0
+end
+
+--■切れ目を目立たせなくする処理--------------------------------
+if(0<(d_rz+90)%360 and (d_rz+90)%360<180)then
+	rev	=1
+else
+	rev	=-1
+end
+
+adX	=(math.cos((rad+90)*math.pi/180))*adzm*rev
+adY	=(math.sin((rad+90)*math.pi/180))*adzm*rev
+
+--■描画処理----------------------------------------------------
+if (obj.track1 ~= 0.0) then
+obj.copybuffer("tmp","obj")
+	--■パーツ1---------------------------------------------------------------------
+	obj.load("tempbuffer")
+	obj.effect("斜めクリッピング","中心X",cenX,"中心Y",cenY,"角度",rad,"ぼかし",bl or 0)
+	obj.draw(ax2+adX,ay2+adY,0,1,1)
+	--■パーツ2---------------------------------------------------------------------
+	obj.load("tempbuffer")
+	obj.effect("斜めクリッピング","中心X",cenX,"中心Y",cenY,"角度",180+rad,"ぼかし",bl or 0)
+	obj.draw(ax1-adX,ay1-adY,0,1,alpha)
+end
+
+@ジグザグ分断
+--track0:分割数,3,50,4,1
+--track1:移動距離,-1000,1000,100,0.1
+--track2:加速度,0,10,2,0.1
+--track3:ﾗﾝﾀﾞﾑ係数,-100,100,1,1
+--check0:縦分割,0;
+--dialog:開始ウェイト,local wait=0;
+
+obj.effect()
+--●変数------------------------------------------------------------
+local	hh,ww,hht,wwt,num,len,acc,sd,arn,idA,nA,i,mv,ox,oy,j
+local	ay1,ay2,ay3,ay4,ari
+hh	=obj.h/2
+ww	=obj.w/2
+hht	=obj.h
+wwt	=obj.w
+num	=obj.track0
+len	=obj.track1
+acc	=obj.track2
+sd	=obj.track3
+arn	=num*2-2
+
+local arA={}
+idA	=1
+
+if(0<=obj.time-wait)then
+--▼wait処理のif ココカラ-------------------------------------------
+
+if(obj.check0)then--▼縦分割----------------------------------------
+arA[arn+1]=-ww
+arA[arn+2]=-ww
+arA[arn+3]=ww
+arA[arn+4]=ww
+
+--●配列を作る----------------------------------
+for ari=1,arn do
+	nA	=obj.rand(-ww,ww,ari+sd,1)
+	idA	=idA+1
+	arA[ari]=nA
+end
+table.sort(arA)		--配列を昇順に並べ直す--
+
+
+for i=1,num do
+	j=i*2-1
+	--●昇順になったランダム値を配列に割り当てていく------------
+	if(i%2==1)then
+		ay1,ay2,ay3,ay4	=arA[j+1],arA[j],arA[j+3],arA[j+2]
+		mv	=1
+	else
+		ay1,ay2,ay3,ay4	=arA[j],arA[j+1],arA[j+2],arA[j+3]
+		mv	=-1
+	end
+	--●移動----------------------------------------------------
+	ox=0			--縦分割なのでX方向には動かない
+	oy=((obj.time-wait)/(obj.totaltime-wait))^(acc)*len*mv
+--●描画------------------------------------------------------------
+obj.drawpoly(
+	ay1+ox	,-hh+oy	,0,
+	ay2+ox	,hh+oy	,0,
+	ay3+ox	,hh+oy	,0,
+	ay4+ox	,-hh+oy	,0,
+	ww+ay1	,0	,
+	ww+ay2	,hht	,
+	ww+ay3	,hht	,
+	ww+ay4	,0	,
+	1)
+end	----forの終わり---------------------------------------------
+
+else  ------------▼横分割------------------------------------------
+arA[arn+1]=-hh
+arA[arn+2]=-hh
+arA[arn+3]=hh
+arA[arn+4]=hh
+--●配列を作る----------------------------------
+for ari=1,arn do
+	nA	=obj.rand(-hh,hh,ari+sd,1)
+	idA	=idA+1
+	arA[ari]=nA
+end
+
+table.sort(arA)		--配列を昇順に並べ直す--
+
+
+for i=1,num do
+	j=i*2-1
+	--●昇順になったランダム値を配列に割り当てていく------------
+	if(i%2==1)then
+		ay1,ay2,ay3,ay4	=arA[j+1],arA[j],arA[j+3],arA[j+2]
+		mv	=1
+	else
+		ay1,ay2,ay3,ay4	=arA[j],arA[j+1],arA[j+2],arA[j+3]
+		mv	=-1
+	end
+	--●移動----------------------------------------------------
+	ox=((obj.time-wait)/(obj.totaltime-wait))^(acc)*len*mv
+	oy=0			--横分割なのでY方向には動かない
+--●描画------------------------------------------------------------
+obj.drawpoly(
+	-ww+ox	,ay1+oy	,0,
+	ww+ox	,ay2+oy	,0,
+	ww+ox	,ay3+oy	,0,
+	-ww+ox	,ay4+oy	,0,
+	0	,hh+ay1,
+	wwt	,hh+ay2,
+	wwt	,hh+ay3,
+	0	,hh+ay4,
+	1)
+end	----forの終わり---------------------------------------------
+
+--●縦横判定分岐のifココマデ----------------------------------------
+end
+--▲wait処理のif ココマデ-------------------------------------------
+else end
+
+@放射分割
+--track0:分割数,2,20,2,1
+--track1:移動距離,-1000,1000,100,0.1
+--track2:加速度,0,10,2,0.1
+--track3:角度,-360,360,0,0.1
+--dialog:開始待ち,local wait=0;中心X,local cenX=0;中心Y,local cenY=0;移動ランダム係数,local rd=1;縁ぼかし,local bl=0;分割加算値,local add=0;
+
+obj.effect()
+--■変数-------------------------------------------------------------------------
+--local drz,rad,num,dist,acc,rzA,rzB,ToM,i,mv,ox,oy,rdm
+drz	=obj.getvalue("rz")
+rad	=obj.track3
+num	=obj.track0+add
+dist	=obj.track1
+acc	=obj.track2
+rzA	=360/num
+rzB	=180-360/num
+ToM	=((obj.time-wait)/(obj.totaltime-wait))
+
+if(0<ToM)then
+--▼if分岐ここから---------------------------------------------------------------
+
+obj.copybuffer("tmp","obj")
+for i=0,num-1 do--▼forループここから--------------------------------------------
+
+	if(rd<1)then rd=1 else end	--ランダム値が1以下にならないように
+	rdm	=obj.rand(1,rd,i+rad,1)
+	mv	=ToM^acc*(dist*rdm)
+
+obj.load("tempbuffer")
+obj.effect("斜めクリッピング","中心X",cenX,"中心Y",cenY,"角度",rzA*i+rad,"ぼかし",bl or 0)
+obj.effect("斜めクリッピング","中心X",cenX,"中心Y",cenY,"角度",rzA*i+rzB+rad,"ぼかし",bl or 0)
+ox	=math.cos((-rzA/2+rzA*i+rad+drz)*math.pi/180)*mv
+oy	=math.sin((-rzA/2+rzA*i+rad+drz)*math.pi/180)*mv
+obj.draw(ox,oy)
+end		--▲forループこここまで------------------------------------------
+
+--▼if分岐ここまで---------------------------------------------------------------
+else end
+

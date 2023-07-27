@@ -1,0 +1,26 @@
+-- 雀の往来
+
+@口パク準備
+--track0:ローカット,0,16000,0,1
+--track1:ハイカット,0,16000,0,1
+--track2:しきい値,0,2000,0,1
+--track3:感度,0,15,0,1
+--file:
+tonumber(nil)
+if file ~= nil and file ~= "" then
+  require("PSDToolKit").talk:set(obj, file, obj.track0, obj.track1, obj.track2, obj.track3)
+  file = nil
+end
+
+@多目的スライダー
+--track0:,0,100,0,1
+--track1:,0,100,0,1
+--track2:,0,100,0,1
+--track3:,0,100,0,1
+require("PSDToolKit").valueholder:set(
+  obj.layer,
+  {obj.track0, obj.track1, obj.track2, obj.track3},
+  obj
+)
+obj.load("framebuffer",0,0,1,1)
+obj.alpha = 0

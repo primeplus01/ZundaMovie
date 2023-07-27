@@ -1,0 +1,433 @@
+@連番画像ループ[A]
+--track0:X間隔%,-1000,1000,100
+--track1:Y間隔%,-1000,1000,100
+--track2:X個数,1,100,3,1
+--track3:Y個数,1,100,3,1
+--dialog:Z間隔(pxl),gz=300;Z個数,nz=1;XY軸段違い/chk,yd=0;ZY軸段違い/chk,zd=0;
+gx=obj.track0
+gy=obj.track1
+nx=obj.track2
+ny=obj.track3
+
+@連番画像ループ[B]
+--track0:File数,0,500,10,1
+--track1:連番桁,1,8,4,1
+--file:
+totalfile=obj.track0
+kt=obj.track1
+for k=0,nz-1 do
+  z=-gz*(nz-1)/2 + k*gz
+  for j=0,ny-1 do
+    y=-gy*(ny-1)/2 + j*gy
+    if(zd==1 and k%2==0) then
+      y=y+gy/2
+    end
+    for i=0,nx-1 do
+      x=-gx*(nx-1)/2 + i*gx
+      if(yd==1 and j%2==0) then
+        x=x+gx/2
+      end
+
+--連番画像読み込み(from hksy.obj)を改変
+lp      = string.len(file) - (kt+4)
+path    = string.sub(file,  1, lp)
+ext     = string.sub(file, -3)
+randfile=obj.rand(1,totalfile,j+500,i+1000*k)
+name    = string.format("%0" .. kt .. "d", randfile) .. "." .. ext
+load    = path .. name
+obj.load("image", load)
+
+--以下、画像ループ2の続き
+obj.effect()
+obj.draw(x,y,z)      
+end
+end
+end
+
+
+@連番円形並べ[A]
+--track0:個数,0,100,10,1
+--track1:距離,0,2000,200
+--track2:拡大率,0,800,100
+--track3:回転,-360,360,0
+--dialog:回転なし/chk,dir=0;
+n=obj.track0
+l=obj.track1
+k=obj.track2/100
+rr=obj.track3
+
+@連番円形並べ[B]
+--track0:File数,0,500,10,1
+--track1:連番桁,1,8,4,1
+--track2:順番,0,1,0,1
+--file:
+totalfile=obj.track0
+kt=obj.track1
+ran=obj.track2
+for i=0,n-1 do
+
+--連番画像読み込み(from hksy.obj)を改変
+lp    = string.len(file) - (kt+4)
+path    = string.sub(file,  1, lp)
+ext    = string.sub(file, -3)
+if(ran<1) then
+  randfile=obj.rand(1,totalfile,0,i)
+else
+  randfile=i+1
+end
+name    = string.format("%0" .. kt .. "d", randfile) .. "." .. ext
+load    = path .. name
+obj.load("image", load)
+
+--以下、円形並べの続き
+obj.effect()
+  r=360*i/n+rr
+  x=math.sin(r*math.pi/180)*l*k
+  y=-math.cos(r*math.pi/180)*l*k
+  s=obj.zoom*k
+  rz=360*i/n+rr
+  if(dir==1) then
+    rz=rz*0
+  end
+  obj.draw(x,y,0,s,1,0,0,rz)
+end
+
+
+@連番円形-カメラ[A]
+--track0:個数,0,100,10,1
+--track1:距離,0,2000,200
+--track2:拡大率,0,800,100
+--track3:回転,-360,360,0
+--dialog:Y軸回転なし/chk,dir=0;
+n=obj.track0
+l=obj.track1
+k=obj.track2/100
+rr=obj.track3
+
+@連番円形-カメラ[B]
+--track0:File数,0,500,10,1
+--track1:連番桁,1,8,4,1
+--track2:順番,0,1,0,1
+--file:
+totalfile=obj.track0
+kt=obj.track1
+ran=obj.track2
+for i=0,n-1 do
+
+--連番画像読み込み(from hksy.obj)を改変
+lp    = string.len(file) - (kt+4)
+path    = string.sub(file,  1, lp)
+ext    = string.sub(file, -3)
+if(ran<1) then
+  randfile=obj.rand(1,totalfile,0,i)
+else
+  randfile=i+1
+end
+name    = string.format("%0" .. kt .. "d", randfile) .. "." .. ext
+load    = path .. name
+obj.load("image", load)
+
+--以下、円形並べ-カメラの続き
+obj.effect()
+  r=360*i/n+rr
+  x=math.sin(r*math.pi/180)*l*k
+  z=-math.cos(r*math.pi/180)*l*k
+  s=obj.zoom*k
+  ry=-360*i/n-rr
+  if(dir==1) then
+    ry=ry*0
+  end
+  obj.draw(x,0,z,s,1,0,ry,0)
+end
+
+
+@連番ランダム配置[A]
+--track0:個数,0,1000,5,1
+--track1:範囲,0,1000,100
+--track2:移動速度,0,1000,0
+--track3:回転速度,0,1000,0
+--dialog:X軸範囲[%],wx=100;Y軸範囲[%],wy=100;Z軸範囲[%],wz=0;X回転/chk,kx=0;Y回転/chk,ky=0;Z回転/chk,kz=1;拡大最小[-%],s_min=0;
+
+n=obj.track0  --個数
+w=obj.track1/100  --範囲
+v=obj.track2/100  --移動速度
+r=obj.track3/100  --回転速度
+
+@連番ランダム配置[B]
+--track0:File数,0,500,10,1
+--track1:連番桁,1,8,4,1
+--file:
+totalfile=obj.track0
+kt=obj.track1
+for i=0,n-1 do
+
+--連番画像読み込み(from hksy.obj)を改変
+lp    = string.len(file) - (kt+4)    -- パスの長さ ( 8 = 桁数 + 拡張子 )
+path    = string.sub(file,  1, lp)            -- パス抽出
+ext    = string.sub(file, -3)                -- 拡張子抽出
+randfile=obj.rand(1,totalfile,0,i)
+name    = string.format("%0" .. kt .. "d", randfile) .. "." .. ext    -- ファイル名
+load    = path .. name                    -- 結合
+obj.load("image", load)
+
+--以下、ランダム配置の続き
+obj.effect()
+  x=(obj.rand(-obj.screen_w-obj.w,obj.screen_w+obj.w,i,0)/2*w + obj.rand(-100,100,i,3)*obj.time*v)*wx/100
+  y=(obj.rand(-obj.screen_h-obj.h,obj.screen_h+obj.h,i,1)/2*w + obj.rand(-100,100,i,4)*obj.time*v)*wy/100
+  z=(obj.rand(-obj.screen_w-obj.w,obj.screen_w+obj.w,i,2)/2*w + obj.rand(-100,100,i,5)*obj.time*v)*wz/100
+  s=obj.rand(100-s_min,100,i,6)/100
+  rx=(obj.rand(0,360,i,7) + obj.rand(-100,100,i,10)*obj.time*r)*kx
+  ry=(obj.rand(0,360,i,8) + obj.rand(-100,100,i,11)*obj.time*r)*ky
+  rz=(obj.rand(0,360,i,9) + obj.rand(-100,100,i,12)*obj.time*r)*kz
+  obj.draw(x,y,z,s,1,rx,ry,rz)
+end
+
+
+@連番パーティクル[A]
+--track0:頻度,0.1,500,10
+--track1:距離,1,10000,500
+--track2:速度,1,2000,400
+--track3:方向,-360,360,0
+--dialog:ランダム方向[度],dir_ran=30;透過速度[%],av=100;拡大速度[%],sv=0;ランダム速度[-%],v_ran=0;ランダム拡大[-%],s_ran=0;ランダムZ角度[度],rz_ran=0;X軸ランダム,x_ran=0;Y軸ランダム,y_ran=0;Z軸ランダム,z_ran=0;回転速度[度],rv_ran=0;XY回転あり/chk,rxy_ran=0;Z軸ランダム方向,zi_ran=0;
+b=1/obj.track0      --出力間隔(秒)
+l=obj.track1        --距離
+v=l/obj.track2      --距離を進むのにかかる時間
+dir=-obj.track3+90  --出力方向
+
+@連番パーティクル[B]
+--track0:File数,0,500,10,1
+--track1:連番桁,1,8,4,1
+--file:
+totalfile=obj.track0
+kt=obj.track1
+n=obj.totaltime/b
+for i=0,n-1 do
+
+--連番画像読み込み(from hksy.obj)を改変
+lp    = string.len(file) - (kt+4)    -- パスの長さ ( 8 = 桁数 + 拡張子 )
+path    = string.sub(file,  1, lp)            -- パス抽出
+ext    = string.sub(file, -3)                -- 拡張子抽出
+randfile=obj.rand(1,totalfile,0,i)
+name    = string.format("%0" .. kt .. "d", randfile) .. "." .. ext    -- ファイル名
+
+load    = path .. name                    -- 結合
+
+obj.load("image", load)
+
+--以下、パーティクル再現の続き
+obj.effect()
+  t=(v-obj.time+i*b)/v
+  t=math.min(1,math.max(t,0))
+  direct=obj.rand(dir-dir_ran/2,dir+dir_ran/2,i,0)
+  x=   l*math.cos(direct*math.pi/180)*(1-t)*obj.rand(100-v_ran,100,i,12)/100+obj.rand(-x_ran/2,x_ran/2,i,1)
+  y=   l*math.sin(direct*math.pi/180)*(1-t)*obj.rand(100-v_ran,100,i,12)/100+obj.rand(-y_ran/2,y_ran/2,i,2)
+  z=obj.rand(-zi_ran/2,zi_ran/2,i,11)*(1-t)*obj.rand(100-v_ran,100,i,12)/100+obj.rand(-z_ran/2,z_ran/2,i,3)
+  zoom=1+sv/100*(1-t)-obj.rand(0,s_ran,i,10)/100
+  alpha=1-av/100*(1-t)
+  rx=rxy_ran*(obj.rand(0,360,i,4)    +obj.rand(-rv_ran/2,rv_ran/2,i,7)*obj.time)
+  ry=rxy_ran*(obj.rand(0,360,i,5)    +obj.rand(-rv_ran/2,rv_ran/2,i,8)*obj.time)
+  rz=obj.rand(-rz_ran/2,rz_ran/2,i,6)+obj.rand(-rv_ran/2,rv_ran/2,i,9)*obj.time
+  if(t==0 or t==1) then
+    alpha=0
+  end
+  obj.draw(x,y,z,zoom,alpha,rx,ry,rz)
+end
+
+
+@連番球状配置[A]
+--track0:半径,1,1000,100
+--track1:自転,-3600,3600,0
+--track2:方向,-1,4,3,1
+--dialog:極スケール[%],pscale=100;Xスケール[%],xscale=100;Yスケール[%],yscale=100;Zスケール[%],zscale=100;経線頂点,keisen=10;緯線頂点,isen=10;両極を描画/chk,pdraw=0;
+
+--※GH球状配置2(sm13806316参照)を改変したものです。
+r = obj.track0
+rotshift = obj.track1
+dir = obj.track2
+
+@連番球状配置[B]
+--track0:File数,0,500,10,1
+--track1:連番桁,1,8,4,1
+--file:
+totalfile=obj.track0
+kt=obj.track1
+for i=0,keisen-1 do
+  if(pdraw) then
+    ry = 90 - 180/(keisen+1) * (i+1) -- 極を考えて均等配置
+  else
+    ry = 90 - 90/keisen - 180/keisen * i  -- 極を考えずに均等配置
+  end
+  radY=math.rad(ry)
+  -- リサイズ計算はKENくん方式を踏まえてmath.cos()を使うように改修
+  zm = ((100-pscale)*math.cos(radY) + pscale) / 100
+  -- 角度に対して線形にリサイズしていたときの式
+  --  zm=(100 - (100-pscale)/90*math.abs(ry)) / 100
+  for j=0,isen-1 do
+
+--連番画像読み込み(from hksy.obj)を改変
+lp    = string.len(file) - (kt+4)
+path    = string.sub(file,  1, lp)
+ext    = string.sub(file, -3)
+randfile=obj.rand(1,totalfile,j+500,i+1000)
+name    = string.format("%0" .. kt .. "d", randfile) .. "." .. ext
+load    = path .. name
+obj.load("image", load)
+
+--以下、球状配置の続き
+obj.effect()
+    rx = 360/isen * j + rotshift
+    rz = -90
+    radX = math.rad(rx)
+    px = -r * math.sin(radY) * xscale/100
+    py = r * math.sin(radX) * math.cos(radY) * yscale/100
+    pz = -r * math.cos(radX) * math.cos(radY) * zscale/100
+    if(dir==-1) then -- 指定なし
+      rx = 0
+      ry = 0
+      rz = 0
+    elseif(dir==0) then -- 正面を向く
+      rx = 0
+      ry = 0
+    elseif(dir==1) then -- 球の軸の外側を向く
+      ry=0
+    elseif(dir==2) then -- 球の軸の内側を向く
+      rx=rx+180
+      ry=0
+    elseif(dir==4) then -- 球の中心を向く
+      px=-px
+      py=-py
+      pz=-pz
+    end
+    obj.draw(px,py,pz,zm,1,rx,ry,rz)
+  end
+end
+if(pdraw==1) then -- 両極のオブジェクトを描く
+  -- 北極が0度経線、南極が180度経線に従うようにする。
+  px = r*xscale/100
+  zm = pscale/100
+  if(dir==-1) then -- 指定なし
+    obj.draw(-px,0,0,zm,1,0,0,0)
+    obj.draw(px,0,0,zm,1,0,0,0)
+  elseif(dir==0) then -- 正面を向く
+    obj.draw(-px,0,0,zm,1,0,0,-90)
+    obj.draw(px,0,0,zm,1,0,0,-90)
+  elseif(dir==1) then -- 球の軸の外側を向く場合
+    obj.draw(-px,0,0,zm,1,rotshift,0,-90)
+    obj.draw(px,0,0,zm,1,rotshift+180,0,-90)
+  elseif(dir==2) then -- 球の軸の内側を向く場合
+    obj.draw(-px,0,0,zm,1,rotshift+180,0,-90)
+    obj.draw(px,0,0,zm,1,rotshift,0,-90)
+  elseif(dir==3) then -- 球の外側を向く場合
+    obj.draw(-px,0,0,zm,1,rotshift,90,-90)
+    obj.draw(px,0,0,zm,1,rotshift+180,-90,-90)
+  elseif(dir==4) then -- 球の内側を向く場合
+    obj.draw(-px,0,0,zm,1,rotshift+180,-90,-90)
+    obj.draw(px,0,0,zm,1,rotshift,90,-90)
+  end
+end
+
+@連番らせん[A]
+--track0:個数,0,300,10,1
+--track1:回転差分,-360,360,10
+--track2:座標差分,-1000,1000,10
+--track3:回転,-3600,3600,0
+--dialog:軸[0-2],rasen_jiku=2;向き[0-2],rasen_dir=1;初期半径,rasen_r=100;半径差分,rasen_dr=0;大きさ,zoom=0;透明度,alpha=0;回転に同期移動/chk,douki=0;
+--
+--※GH螺旋配置(sm13806316参照)を改変したものです。
+--
+-- ●軸
+--    0:X軸
+--    1:Y軸
+--    2:Z軸
+--
+-- ●向き
+--    0:回転なし(手前向き固定)
+--    1:面を円の外側に向ける（軸がZの場合は上側を円の外側に向ける）
+--    2:面を円の内側に向ける（軸がZの場合は上側を円の内側に向ける）
+--
+n=obj.track0
+drot = obj.track1
+dpos = obj.track2
+rot = obj.track3
+
+@連番らせん[B]
+--track0:File数,0,500,10,1
+--track1:連番桁,1,8,4,1
+--track2:順番,0,1,0,1
+--file:
+totalfile=obj.track0
+kt=obj.track1
+ran=obj.track2
+
+function renban(ai)
+--連番画像読み込み(from hksy.obj)を改変
+lp    = string.len(file) - (kt+4)
+path    = string.sub(file,  1, lp)
+ext    = string.sub(file, -3)
+if(ran<1) then
+  randfile=obj.rand(1,totalfile,0,ai)
+else
+  randfile=ai+1
+end
+name    = string.format("%0" .. kt .. "d", randfile) .. "." .. ext
+load    = path .. name
+obj.load("image", load)
+obj.effect()
+end
+
+--以下、螺旋配置の続き
+if(rasen_jiku==0) then -- X軸螺旋
+  for i=0,n-1 do
+    if(douki==1 and (drot~=0)) then
+      x = dpos*i + (dpos/drot)*rot
+    else
+      x = dpos*i
+    end
+    y = (rasen_r + rasen_dr*i) * math.sin((rot + drot*i)*math.pi/180)
+    z = - (rasen_r + rasen_dr*i) * math.cos((rot + drot*i)*math.pi/180)
+    dir_rot = 0
+    if(rasen_dir==1) then
+      dir_rot = rot + drot*i
+    elseif(rasen_dir==2) then
+      dir_rot = rot + drot*i + 180
+    end
+    renban(i)
+    obj.draw(x,y,z,obj.zoom+zoom/100*i,obj.alpha+alpha/100*i,dir_rot,0,0)
+  end
+elseif(rasen_jiku==1) then -- Y軸螺旋
+  for i=0,n-1 do
+    x = - (rasen_r + rasen_dr*i) * math.sin((rot + drot*i)*math.pi/180)
+    if(douki==1 and (drot~=0)) then
+      y = dpos*i + (dpos/drot)*rot
+    else
+      y = dpos*i
+    end
+    z = - (rasen_r + rasen_dr*i) * math.cos((rot + drot*i)*math.pi/180)
+    dir_rot = 0
+    if(rasen_dir==1) then
+      dir_rot = rot + drot*i
+    elseif(rasen_dir==2) then
+      dir_rot = rot + drot*i + 180
+    end
+    renban(i)
+    obj.draw(x,y,z,obj.zoom+zoom/100*i,obj.alpha+alpha/100*i,0,dir_rot,0)
+  end
+else -- Z軸螺旋
+  for i=0,n-1 do
+    x = (rasen_r + rasen_dr*i) * math.cos((-90 +rot + drot*i)*math.pi/180)
+    y = (rasen_r + rasen_dr*i) * math.sin((-90 + rot + drot*i)*math.pi/180)
+    if(douki==1 and (drot~=0)) then
+      z = dpos*i + (dpos/drot)*rot
+    else
+      z = dpos*i
+    end
+    dir_rot = 0
+    if(rasen_dir==1) then
+      dir_rot = rot + drot*i
+    elseif(rasen_dir==2) then
+      dir_rot = rot + drot*i + 180
+    end
+    renban(i)
+    obj.draw(x,y,z,obj.zoom+zoom/100*i,obj.alpha+alpha/100*i,0,0,dir_rot)
+  end
+end 

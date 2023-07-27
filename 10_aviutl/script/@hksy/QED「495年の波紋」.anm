@@ -1,0 +1,79 @@
+--track0:個数,0,100,32,1
+--track1:スピード,0,1000,100
+--track2:範囲X,0,2000,512
+--track3:範囲Y,0,2000,384
+--check0:角度を変えない,0
+obj.effect()
+
+
+
+lim_u	= (obj.track3/2)+obj.y
+lim_b	= (obj.track3/2)-obj.y
+
+lim_l	= (obj.track2/2)+obj.x
+lim_r	= (obj.track2/2)-obj.x
+
+
+
+for i=1,obj.track0 do
+
+  r = 360*i/obj.track0
+  x =  math.sin(r*math.pi/180) *obj.time*obj.track1
+  y = -math.cos(r*math.pi/180) *obj.time*obj.track1
+
+  alp	= 1	-- 透明度フラグ		あんまりフラグは立てないほうがいいみたいですけどね・・・
+  s	= r	-- 表示角度
+
+
+
+
+  --左方向
+  if ( x < -lim_l ) then
+    x = x - ( x + lim_l )*2
+
+    s = 360 - r
+
+    --上、右方向対策
+    if ( y < -lim_u ) or ( x > lim_r ) then
+      alp = 0
+    end
+  end
+
+
+  --右方向
+  if ( x > lim_r ) then
+    x = x - ( x - lim_r )*2
+
+    s = 360 - r
+
+    --上、左方向対策
+    if ( y < -lim_u ) or ( x < -lim_l ) then
+      alp = 0
+    end
+  end
+
+
+  --上方向
+  if ( y < -lim_u ) then
+    y = y - ( y + lim_u )*2
+
+    s = 180 - r	-- かなり決め付けた書き方
+
+  end
+
+
+  --下方向
+  if ( y > lim_b ) then
+    alp = 0
+  end
+
+
+  if( obj.check0 )then	-- 角度を変えない
+    s = 0
+  end
+
+  if alp > 0 then
+    obj.draw(x,y,0,1,alp,0,0,s)
+  end
+
+end

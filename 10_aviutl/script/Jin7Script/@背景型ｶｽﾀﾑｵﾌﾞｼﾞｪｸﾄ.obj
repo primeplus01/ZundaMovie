@@ -1,0 +1,413 @@
+@音波
+--track0:X位置,-2000,2000,0,0.1
+--track1:Y位置,-2000,2000,0,0.1
+--track2:X回転,-360,360,-70,0.1
+--track3:境目調整,-1000,1000,100,1
+--check0:逆方向,0
+--dialog:基本サイズ[%],local size=120;基本色/col,local col1=0xffffff;Z回転,local rz=0;速度X,local sx=0;速度Y,local sy=-100;変化速度,local chg=0.0;周期X,local tx=0.2;周期Y,local ty=5;しきい値,local thr=85;ライト効果/chk,local lit=1;ライト強さ,local str=100;ライト補強,local edge=1;ライト色/col,local col3=0x00ffff;中心幅,local cen=0;境目調整,local boundary=0;
+obj.effect()
+
+local	ox,oy,rx,yy,xx,boundary
+ox	=obj.track0
+oy	=obj.track1
+rx	=obj.track2
+boundary=obj.track3
+tw	=obj.screen_w
+th	=obj.screen_h
+if(obj.check0)then
+	yy	=-sy
+	xx	=-sx
+else
+	yy	=sy
+	xx	=sx
+end
+obj.load("figure","背景",col1)
+obj.setoption("drawtarget","tempbuffer",tw,th)
+obj.effect("ノイズ","強さ",100,"速度X",xx,"速度Y",yy,"変化速度",chg,"周期X",tx,"周期Y",ty,"しきい値",thr,"type",1)
+obj.effect("縁取り","サイズ",edge,"color",col1)
+obj.effect("極座標変換","中心幅",cen)
+obj.effect("ミラー","境目調整",-285-(cen+boundary+edge),"type",0)
+if(lit==1)then
+	obj.effect("ライト","強さ",str,"color",col3)
+else end
+obj.draw(ox,oy,0,size/100,1,rx,0,rz)
+obj.load("tempbuffer")
+
+-------------------------------------------------------------------------------
+@ワープ表現
+--track0:X位置,-2000,2000,0,0.1
+--track1:Y位置,-2000,2000,0,0.1
+--track2:X回転,-360,360,0,0.1
+--track3:中心穴,0,500,0,1
+--check0:逆方向,0
+--dialog:基本サイズ[%],local size=120;基本色/col,local col1=0xffffff;速度X,local sx=0;速度Y,local sy=-20;変化速度,local chg=0.0;周期X,local tx=20;周期Y,local ty=0.5;しきい値,local thr=60;ライト効果/chk,lit=1;ライト強さ,local str=300;ライト色/col,local col3=0xffffff;
+obj.effect()
+
+local	ox,oy,rx,rz,yy,xx
+ox	=obj.track0
+oy	=obj.track1
+rx	=obj.track2
+hole	=obj.track3
+tw	=obj.screen_w
+th	=obj.screen_h
+if(obj.check0)then
+	yy	=-sy
+	xx	=-sx
+else
+	yy	=sy
+	xx	=sx
+end
+obj.load("figure","背景",col1)
+obj.setoption("drawtarget","tempbuffer",tw,th)
+obj.effect("ノイズ","強さ",100,"速度X",xx,"速度Y",yy,"変化速度",chg,"周期X",tx,"周期Y",ty,"しきい値",thr,"type",2)
+obj.effect("極座標変換","中心幅",hole)
+if(lit==1)then
+	obj.effect("ライト","強さ",str,"color",col3)
+else end
+obj.draw(ox,oy,0,size/100,1,rx,0,0)
+obj.load("tempbuffer")
+-------------------------------------------------------------------------------
+@目眩
+--track0:X位置,-2000,2000,0,0.1
+--track1:Y位置,-2000,2000,0,0.1
+--track2:X回転,-360,360,0,0.1
+--track3:中心穴,0,500,0,1
+--check0:逆方向,0
+--dialog:基本サイズ[%],local size=120;基本色/col,local col1=0x0000ff;速度X,local sx=0;速度Y,local sy=-10;変化速度,local chg=10;周期X,local tx=5;周期Y,local ty=10;しきい値,local thr=70;縁取り,local edge=3;縁の色/col,local col2=0x00ffff;円周速度,local cirY=10;渦巻き,local var=0.1;
+obj.effect()
+
+local	ox,oy,rx,rz,yy,xx
+ox	=obj.track0
+oy	=obj.track1
+rx	=obj.track2
+hole	=obj.track3
+tw	=obj.screen_w
+th	=obj.screen_h
+if(obj.check0)then
+	yy	=-sy
+	xx	=-sx
+else
+	yy	=sy
+	xx	=sx
+end
+obj.load("figure","背景",col1)
+obj.setoption("drawtarget","tempbuffer",tw,th)
+obj.effect("ノイズ","強さ",100,"速度X",xx,"速度Y",yy,"変化速度",chg,"周期X",tx,"周期Y",ty,"しきい値",thr,"type",4)
+obj.effect("縁取り","サイズ",edge,"color",col2)
+obj.effect("ノイズ","強さ",100,"速度X",0,"速度Y",cirY,"変化速度",0,"周期X",0,"周期Y",3,"しきい値",0,"type",5)
+obj.effect("極座標変換","渦巻",var)
+obj.draw(ox,oy,0,size/100,1,rx,0,0)
+obj.load("tempbuffer")
+
+-------------------------------------------------------------------------------
+@雲渦
+--track0:X位置,-2000,2000,0,0.1
+--track1:Y位置,-2000,2000,-25,0.1
+--track2:X回転,-360,360,0,-50.1
+--track3:雲の厚さ,0.1,50,15,0.1
+--check0:逆方向,0
+--dialog:タイプ,typ=4;基本サイズ[%],local size=120;基本色/col,local col1=0xffffff;回転速度,local loop=3;速度X,local sx=0;速度Y,local sy=0;変化速度,local chg=50;周期X,local tx=0.5;しきい値,local thr=60;縁取り,local edge=1;縁の色/col,local col2=0x00ffff;ライト効果/chk,lit=0;ライト強さ,local str=100;ライト色/col,local col3=0xffffff;渦巻き,local var=2;
+obj.effect()
+
+local	ox,oy,rx,rz,yy,xx,ty
+ox	=obj.track0
+oy	=obj.track1
+rx	=obj.track2
+ty	=obj.track3
+rz	=loop*360*obj.time/obj.totaltime
+tw	=obj.screen_w
+th	=obj.screen_h
+if(obj.check0)then
+	yy	=-sy
+	xx	=-sx
+else
+	yy	=sy
+	xx	=sx
+end
+
+if(typ<0 or 5<typ)then
+typ=4
+end
+
+obj.load("figure","背景",col1)
+obj.setoption("drawtarget","tempbuffer",tw,th)
+obj.effect("ノイズ","強さ",100,"速度X",xx,"速度Y",yy,"変化速度",chg,"周期X",tx,"周期Y",ty,"しきい値",thr,"type",typ)
+obj.effect("縁取り","サイズ",edge,"color",col2)
+if(lit==1)then
+	obj.effect("ライト","強さ",str,"color",col3)
+else end
+
+obj.effect("極座標変換","渦巻",var)
+obj.draw(ox,oy,0,size/100,1,rx,0,rz)
+obj.load("tempbuffer")
+-------------------------------------------------------------------------------
+@人魂
+--track0:個数,1,1000,300,1
+--track1:速度,-50,50,-1,0.1
+--track2:変化速度,0,50,5,0.1
+--track3:ゆらぎ幅,0,20,0.5,0.1
+--dialog:サイズ,local size=150;色/col,local col=0xffc000;ゆらぎ速度,local f_speed=1;奥行き,local depth=7;速度X,local sx=0;速度Y,local sy=5;周期X,local tx=1;周期Y,local ty=2;しきい値,local thr=0;ライト効果/chk,local lit=1;ライト強さ,local str=100;ライト色/col,local col3=0xff0000;ラスター幅,local rsw=10;ラスター高さ,local rsh=50;
+
+--■エフェクト1-------------------------------------------------
+obj.load("figure","三角形",col,size)
+
+obj.effect("ぼかし","範囲",size/3)
+if(lit==1)then
+	obj.effect("ライト","強さ",str,"color",col3,"逆光",1)
+end
+obj.effect()
+--■変数--------------------------------------------------------
+local w,h,n,s,chg,fs,fw,t,p,i,r,x,y,sc
+w	=obj.screen_w/2 + obj.w
+h	=obj.screen_h/2 + obj.h
+n	=obj.track0
+s	=obj.track1/10*obj.time
+chg	=obj.track2
+fs	=f_speed*obj.time*math.pi*2/10
+fw	=obj.track3*obj.w
+--■描画--------------------------------------------------------
+obj.setoption("drawtarget","tempbuffer",obj.screen_w,obj.screen_h)
+for i=1,n do
+	sc	=1/(1+depth*i/n)
+	t	=s*sc+obj.rand(0,1000,i,1000)/1000
+	p	=math.floor(t)
+	t	=t-p
+	r	=fs+math.pi*2*obj.rand(0,1000,i,1001)/1000
+	x	=obj.rand(-w,w,i,p)+(math.sin(r)*fw)*sc
+	y	=t*h*2-h
+	obj.draw(x,y,0,sc)
+end
+obj.load("tempbuffer")
+--■エフェクト2-------------------------------------------------
+obj.effect("ノイズ","強さ",100,"速度X",sx,"速度Y",sy,
+"変化速度",chg,"周期X",tx,"周期Y",ty,"しきい値",thr,"type",4)
+obj.effect("ラスター","横幅",rsw,"高さ",rsh,"ランダム振幅",1)
+
+-------------------------------------------------------------------------------
+@炎
+--track0:X位置,-2000,2000,0,0.1
+--track1:Y位置,-2000,2000,0,0.1
+--track2:X回転,-360,360,0,0.1
+--track3:Z回転,-360,360,0,0.1
+--check0:逆方向,0
+--dialog:基本サイズ[%],local size=500;ｸﾞﾗﾃﾞｰｼｮﾝ1/col,local col1=0xff0000;ｸﾞﾗﾃﾞｰｼｮﾝ2/col,local col2=0xffff00;速度X,local sx=1;速度Y,local sy=5;変化速度,local chg=10.0;周期X,local tx=7;周期Y,local ty=1;しきい値,local thr=0;ｸﾞﾗﾃﾞｰｼｮﾝ幅,local gw=300;ライト効果/chk,lit=0;ライト強さ,local str=100;ライト色/col,local col3=0xffffff;
+obj.effect()
+
+local	ox,oy,rx,rz,yy,xx
+ox	=obj.track0
+oy	=obj.track1
+rx	=obj.track2
+rz	=obj.track3
+tw	=obj.screen_w
+th	=obj.screen_h
+if(obj.check0)then
+	yy	=-sy
+	xx	=-sx
+else
+	yy	=sy
+	xx	=sx
+end
+obj.load("figure","背景")
+obj.setoption("drawtarget","tempbuffer",tw,th)
+obj.effect("ノイズ","強さ",100,"速度X",xx,"速度Y",yy,"変化速度",chg,"周期X",tx,"周期Y",ty,"しきい値",thr,"type",1)
+obj.effect("グラデーション","強さ",100,"幅",gw,"color",col1,"color2",col2,"type",0)
+obj.draw(ox,oy,0,size/100,1,rx,0,rz)
+obj.load("tempbuffer")
+if(lit==1)then
+	obj.effect("ライト","強さ",str,"color",col3)
+else end
+-------------------------------------------------------------------------------
+@黄泉送り
+--track0:X位置,-2000,2000,0,0.1
+--track1:Y位置,-2000,2000,-120,0.1
+--track2:X回転,-360,360,-80,0.1
+--track3:Z回転,-360,360,0,0.1
+--check0:逆方向,0
+--dialog:基本サイズ[%],local size=500;ｸﾞﾗﾃﾞｰｼｮﾝ1/col,local col1=0x000040;ｸﾞﾗﾃﾞｰｼｮﾝ2/col,local col2=0xffff00;速度X,local sx=0;速度Y,local sy=1;変化速度,local chg=5.0;周期X,local tx=25;周期Y,local ty=1;しきい値,local thr=70;ｸﾞﾗﾃﾞｰｼｮﾝ幅,local gw=300;ライト効果/chk,lit=1;ライト強さ,local str=300;ライト色/col,local col3=0xffffff;
+obj.effect()
+
+local	ox,oy,rx,rz,yy,xx
+ox	=obj.track0
+oy	=obj.track1
+rx	=obj.track2
+rz	=obj.track3
+tw	=obj.screen_w
+th	=obj.screen_h
+if(obj.check0)then
+	yy	=-sy
+	xx	=-sx
+else
+	yy	=sy
+	xx	=sx
+end
+obj.load("figure","背景")
+obj.setoption("drawtarget","tempbuffer",tw,th)
+obj.effect("ノイズ","強さ",100,"速度X",xx,"速度Y",yy,"変化速度",chg,"周期X",tx,"周期Y",ty,"しきい値",thr,"type",0)
+obj.effect("グラデーション","強さ",100,"幅",gw,"color",col1,"color2",col2,"type",0)
+obj.draw(ox,oy,0,size/100,1,rx,0,rz)
+obj.load("tempbuffer")
+if(lit==1)then
+	obj.effect("ライト","強さ",str,"color",col3)
+else end
+-------------------------------------------------------------------------------
+@温泉
+--track0:X位置,-2000,2000,0,0.1
+--track1:Y位置,-2000,2000,0,0.1
+--track2:X回転,-360,360,-80,0.1
+--track3:Z回転,-360,360,30,0.1
+--check0:逆方向,0
+--dialog:基本サイズ[%],local size=500;ｸﾞﾗﾃﾞｰｼｮﾝ1/col,local col1=0x202020;ｸﾞﾗﾃﾞｰｼｮﾝ2/col,local col2=0x80ffff;速度X,local sx=0;速度Y,local sy=2;変化速度,local chg=5.0;周期X,local tx=10;周期Y,local ty=10;しきい値,local thr=10;ｸﾞﾗﾃﾞｰｼｮﾝ幅,local gw=300;ライト効果/chk,lit=1;ライト強さ,local str=100;ライト色/col,local col3=0xffffff;
+obj.effect()
+
+local	ox,oy,rx,rz,yy,xx
+ox	=obj.track0
+oy	=obj.track1
+rx	=obj.track2
+rz	=obj.track3
+tw	=obj.screen_w
+th	=obj.screen_h
+if(obj.check0)then
+	yy	=-sy
+	xx	=-sx
+else
+	yy	=sy
+	xx	=sx
+end
+obj.load("figure","背景")
+obj.setoption("drawtarget","tempbuffer",tw,th)
+obj.effect("ノイズ","強さ",100,"速度X",xx,"速度Y",yy,"変化速度",chg,"周期X",tx,"周期Y",ty,"しきい値",thr,"type",2)
+obj.effect("グラデーション","強さ",100,"幅",gw,"color",col1,"color2",col2,"type",0)
+obj.draw(ox,oy,0,size/100,1,rx,0,rz)
+obj.load("tempbuffer")
+if(lit==1)then
+	obj.effect("ライト","強さ",str,"color",col3)
+else end
+-------------------------------------------------------------------------------
+@降り注ぐ光
+--track0:X位置,-2000,2000,0,0.1
+--track1:Y位置,-2000,2000,-120,0.1
+--track2:X回転,-360,360,-80,0.1
+--track3:Z回転,-360,360,0,0.1
+--check0:逆方向,0
+--dialog:基本サイズ[%],local size=500;ｸﾞﾗﾃﾞｰｼｮﾝ1/col,local col1=0x808080;ｸﾞﾗﾃﾞｰｼｮﾝ2/col,local col2=0xffff00;速度X,local sx=0;速度Y,local sy=1;変化速度,local chg=1;周期X,local tx=10;周期Y,local ty=0;しきい値,local thr=60;ｸﾞﾗﾃﾞｰｼｮﾝ幅,local gw=300;ライト効果/chk,lit=1;ライト強さ,local str=150;ライト色/col,local col3=0xffffff;
+obj.effect()
+
+local	ox,oy,rx,rz,yy,xx
+ox	=obj.track0
+oy	=obj.track1
+rx	=obj.track2
+rz	=obj.track3
+tw	=obj.screen_w
+th	=obj.screen_h
+if(obj.check0)then
+	yy	=-sy
+	xx	=-sx
+else
+	yy	=sy
+	xx	=sx
+end
+obj.load("figure","背景")
+obj.setoption("drawtarget","tempbuffer",tw,th)
+obj.effect("ノイズ","強さ",100,"速度X",xx,"速度Y",yy,"変化速度",chg,"周期X",tx,"周期Y",ty,"しきい値",thr,"type",1)
+obj.effect("グラデーション","強さ",100,"幅",gw,"color",col1,"color2",col2,"type",0)
+obj.draw(ox,oy,0,size/100,1,rx,0,rz)
+obj.load("tempbuffer")
+if(lit==1)then
+	obj.effect("ライト","強さ",str,"color",col3)
+else end
+-------------------------------------------------------------------------------
+@効果線
+--track0:X位置,-2000,2000,0,0.1
+--track1:Y位置,-2000,2000,0,0.1
+--track2:X回転,-360,360,0,0.1
+--track3:Z回転,-360,360,80,0.1
+--check0:逆方向,0
+--dialog:基本サイズ[%],local size=500;ｸﾞﾗﾃﾞｰｼｮﾝ1/col,local col1=0xffffff;ｸﾞﾗﾃﾞｰｼｮﾝ2/col,local col2=0x80ffff;速度X,local sx=2;速度Y,local sy=0;変化速度,local chg=30.0;周期X,local tx=20;周期Y,local ty=0;しきい値,local thr=55;ｸﾞﾗﾃﾞｰｼｮﾝ幅,local gw=300;ライト効果/chk,lit=1;ライト強さ,local str=100;ライト色/col,local col3=0xffffff;
+obj.effect()
+
+local	ox,oy,rx,rz,yy,xx
+ox	=obj.track0
+oy	=obj.track1
+rx	=obj.track2
+rz	=obj.track3
+tw	=obj.screen_w
+th	=obj.screen_h
+if(obj.check0)then
+	yy	=-sy
+	xx	=-sx
+else
+	yy	=sy
+	xx	=sx
+end
+obj.load("figure","背景")
+obj.setoption("drawtarget","tempbuffer",tw,th)
+obj.effect("ノイズ","強さ",100,"速度X",xx,"速度Y",yy,"変化速度",chg,"周期X",tx,"周期Y",ty,"しきい値",thr,"type",0)
+obj.effect("グラデーション","強さ",100,"幅",gw,"color",col1,"color2",col2,"type",0)
+obj.draw(ox,oy,0,size/100,1,rx,0,rz)
+obj.load("tempbuffer")
+if(lit==1)then
+	obj.effect("ライト","強さ",str,"color",col3)
+else end
+
+-------------------------------------------------------------------------------
+@飛行
+--track0:X位置,-2000,2000,0,0.1
+--track1:Y位置,-2000,2000,50,0.1
+--track2:X回転,-360,360,-89,0.1
+--track3:Z回転,-360,360,0,0.1
+--check0:逆方向,1
+--dialog:基本サイズ[%],local size=500;ｸﾞﾗﾃﾞｰｼｮﾝ1/col,local col1=0x000000;ｸﾞﾗﾃﾞｰｼｮﾝ2/col,local col2=0xe0e0e0;速度X,local sx=0;速度Y,local sy=30;変化速度,local chg=10;周期X,local tx=100;周期Y,local ty=1;しきい値,local thr=60;ｸﾞﾗﾃﾞｰｼｮﾝ幅,local gw=100;ライト効果/chk,lit=1;ライト強さ,local str=300;ライト色/col,local col3=0xffffff;
+obj.effect()
+
+local	ox,oy,rx,rz,yy,xx
+ox	=obj.track0
+oy	=obj.track1
+rx	=obj.track2
+rz	=obj.track3
+tw	=obj.screen_w
+th	=obj.screen_h
+if(obj.check0)then
+	yy	=-sy
+	xx	=-sx
+else
+	yy	=sy
+	xx	=sx
+end
+obj.load("figure","背景")
+obj.setoption("drawtarget","tempbuffer",tw,th)
+obj.effect("ノイズ","強さ",100,"速度X",xx,"速度Y",yy,"変化速度",chg,"周期X",tx,"周期Y",ty,"しきい値",thr,"type",2)
+obj.effect("グラデーション","強さ",100,"幅",gw,"color",col1,"color2",col2,"type",0)
+obj.draw(ox,oy,0,size/100,1,rx,0,rz)
+obj.load("tempbuffer")
+if(lit==1)then
+	obj.effect("ライト","強さ",str,"color",col3)
+else end
+
+-------------------------------------------------------------------------------
+@火の粉
+--track0:X位置,-2000,2000,0,0.1
+--track1:Y位置,-2000,2000,0,0.1
+--track2:X回転,-360,360,0,0.1
+--track3:Z回転,-360,360,80,0.1
+--check0:グロー追加,0
+--dialog:色/col,local col1=0xff8000;基本サイズ[%],local size=100;速度X,local sx=0;速度Y,local sy=100;変化速度,local chg=10.0;周期X,local tx=20;周期Y,local ty=5;しきい値,local thr=75;グロー強さ,local str=40;グロー拡散,local glo=50;
+obj.effect()
+
+local	ox,oy,rx,rz,yy,xx
+ox	=obj.track0
+oy	=obj.track1
+rx	=obj.track2
+rz	=obj.track3
+tw	=obj.screen_w
+th	=obj.screen_h
+tl	=math.sqrt(tw^2+th^2)
+
+obj.load("figure","四角形",col1,tl)
+obj.setoption("drawtarget","tempbuffer",tw,th)
+obj.effect("ノイズ","強さ",100,"速度X",sx,"速度Y",sy,"変化速度",chg,"周期X",tx,"周期Y",ty,"しきい値",thr,"type",0)
+
+obj.draw(ox,oy,0,size/100,1,rx,0,rz)
+obj.load("tempbuffer")
+if(obj.check0)then
+obj.effect("グロー","強さ",str,"拡散",glo)
+else end

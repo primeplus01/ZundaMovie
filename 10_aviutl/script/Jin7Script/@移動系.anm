@@ -1,0 +1,816 @@
+@Y軸回転
+--track0:個数,0,500,10,1
+--track1:回転半径,-1000,1000,100,1
+--track2:回転速度,-100,100,5,1
+--track3:縦分散,-500,500,0,1
+--check0:回転パターン変化,0
+--dialog:表示ﾀｲﾌﾟ(1-8),local ptn=0;非表示範囲,local x_disp=0;回転の傾き,local angl=20;X傾き[個別],local Xang=0;Y傾き[個別],local Yang=0;Z傾き[個別],local Zang=0;X回転量[%],local Xrnd=0;Y回転量[%],local Yrnd=100;Z回転量[%],local Zrnd=0;乱数の種,local seed=0;
+
+
+obj.effect()
+local	spd,rds,num,rr,ox,oy,oz,alpha,i,hig
+spd	= obj.track2
+rds	= obj.track1
+hig	= obj.track3/100*obj.screen_h
+num 	= obj.track0
+
+
+
+for i=0, num-1 do
+rr = spd*obj.frame/2 + (360/num)*i
+tate=hig*obj.rand(1,100,i+seed,100)/100
+
+if(obj.check0)then
+     ox = -math.cos(rr*math.pi/180)*rds
+     oy = math.sin(rr*math.pi/180)*angl-tate
+     oz = math.sin(rr*math.pi/180)*rds
+else
+     ox = math.sin(rr*math.pi/180)*rds
+     oy = -math.cos(rr*math.pi/180)*angl-tate
+     oz = -math.cos(rr*math.pi/180)*rds
+end
+
+     obj.rx = rr*(Xrnd/100)
+     obj.ry = rr*(Yrnd/100)
+     obj.rz = rr*(Zrnd/100)
+
+-----表示パターン------
+if(ptn==1)then
+	if(oz>0 or ox<-x_disp or ox>=x_disp)then
+		alpha=1
+	else
+		alpha=0
+	end
+elseif(ptn==2)then
+	if(oz<=0 or ox<-x_disp or ox>=x_disp)then
+		alpha=1
+	else
+		alpha=0
+	end
+elseif(ptn==3)then
+	if(ox<x_disp)then
+		alpha=1
+	else
+		alpha=0
+	end
+elseif(ptn==4)then
+	if(ox>x_disp)then
+		alpha=1
+	else
+		alpha=0
+	end
+elseif(ptn==5)then
+	if(ox>x_disp and oz>0)then
+		alpha=1
+	else
+		alpha=0
+	end
+elseif(ptn==6)then
+	if(ox>x_disp and oz<0)then
+		alpha=1
+	else
+		alpha=0
+	end
+elseif(ptn==7)then
+	if(ox<x_disp and oz>0)then
+		alpha=1
+	else
+		alpha=0
+	end
+elseif(ptn==8)then
+	if(ox<x_disp and oz<0)then
+		alpha=1
+	else
+		alpha=0
+	end
+else
+	if(ox<-x_disp or ox>=x_disp)then
+		alpha=1
+	else
+		alpha=0
+	end
+end
+---------------------------
+
+obj.draw(ox,oy,oz,1,alpha,Xang,Yang,Zang)
+
+end
+
+--[[■更新履歴-------------------------------------
+12/06/04	初版公開
+12/08/10	回転パターン変化を追加
+12/09/04	同時上昇とパラメータを揃える
+12/10/27	変数のローカル化と色々スリム化
+12/12/07	縦分散パラメータを追加
+
+]]---------------------------------------------------
+
+@同時上昇
+--track0:個数,0,500,11,1
+--track1:回転半径,-1000,1000,100,1
+--track2:発生頻度,0.1,5,0.5,0.01
+--track3:表示時間,0.1,5,0.5,0.1
+--check0:回転パターン変化,0
+--dialog:表示ﾀｲﾌﾟ(1-8),local pattern=0;非表示範囲,local x_disp=0;縦移動距離,local mvng=50;円の傾き,local angl=20;初期位置のズレ,local strt=0;X傾き[個別],local Xang=0;Y傾き[個別],local Yang=0;Z傾き[個別],local Zang=0;
+
+
+obj.effect()
+
+local	spd,ttl,rdus,obj_num,cir_num,ltime,v_alpha
+local	radius,strtpoint,ox,oy,oz,alpha,i,j
+
+spd	= obj.track2
+ttl	= obj.track3
+rdus	= obj.track1
+obj_num	= obj.track0
+
+cir_num	=math.max(1,obj.totaltime/spd)
+
+-----円の発生ループ-------------------------------
+for j=0,cir_num-1 do
+
+	ltime= math.min(math.fmod(obj.time+spd*j,ttl)/ttl,1)
+	v_alpha	= math.max(1-ltime,0)
+
+-----円を構成する個々のオブジェクト発生ループ-----
+for i=0, obj_num-1 do
+	radius = (360/obj_num)*i
+	strtpoint = obj.rand(-strt,strt,-i,1)
+if(obj.check0)then
+	ox = -math.cos(radius*math.pi/180)*rdus
+	oy = -math.sin((radius*math.pi/180))*angl-(mvng*ltime)+strtpoint
+	oz = -math.sin(radius*math.pi/180)*rdus
+else
+
+	ox = -math.sin((radius*math.pi/180))*rdus
+	oy = -math.cos(radius*math.pi/180)*angl-(mvng*ltime)+strtpoint
+	oz = -math.cos(radius*math.pi/180)*rdus
+end
+	obj.ry = radius
+
+-----表示パターン------
+if(pattern==1)then
+	if(oz>0 or ox<-x_disp or ox>=x_disp)then
+		alpha=v_alpha
+	else
+		alpha=0
+	end
+elseif(pattern==2)then
+	if(oz<=0 or ox<-x_disp or ox>=x_disp)then
+		alpha=v_alpha
+	else
+		alpha=0
+	end
+elseif(pattern==3)then
+	if(ox<x_disp)then
+		alpha=v_alpha
+	else
+		alpha=0
+	end
+elseif(pattern==4)then
+	if(ox>x_disp)then
+		alpha=v_alpha
+	else
+		alpha=0
+	end
+elseif(pattern==5)then
+	if(ox>x_disp and oz>0)then
+		alpha=v_alpha
+	else
+		alpha=0
+	end
+elseif(pattern==6)then
+	if(ox>x_disp and oz<0)then
+		alpha=v_alpha
+	else
+		alpha=0
+	end
+elseif(pattern==7)then
+	if(ox<x_disp and oz>0)then
+		alpha=v_alpha
+	else
+		alpha=0
+	end
+elseif(pattern==8)then
+	if(ox<x_disp and oz<0)then
+		alpha=v_alpha
+	else
+		alpha=0
+	end
+else
+	if(ox<-x_disp or ox>=x_disp)then
+		alpha=v_alpha
+	else
+		alpha=0
+	end
+end
+---------------------------
+
+obj.draw(ox,oy,oz,1,alpha,Xang,Yang,Zang)
+end
+-------------個別オブジェクトループおわり
+end
+
+@楕円・8の字回転
+--track0:円の半径,0,500,100,1
+--track1:軌道縦横,-200,200,0,1
+--track2:移動速度,0,50,2,0.1
+--track3:表示ﾀｲﾌﾟ,0,8,0,1
+--check0:8の字,1
+--dialog:逆回転/chk,local reverse=0;非表示範囲,local disp=0;始発点,local strt=0;単体回転速度,local round=0;単一オブジェクト化/chk,local tmpb=0;図形サイズ,local sz=100;図形角度,local ang=0;
+
+obj.effect()
+--●変数------------------------------------------------------------
+local	rds,spd,ptn,asp_w,asp_h,rv,scrasp
+local	rz,def_rz,ox,oy,alpha,posi,mv
+rds	=obj.track0
+spd	=obj.track2
+ptn	=obj.track3
+def_rz	=-obj.getvalue("rz")
+posi	=(360*(obj.time/obj.totaltime)*spd+strt)%360
+rz	=ang+360*round*(obj.time/obj.totaltime)
+scrasp	=(obj.screen_h/obj.screen_w)*50
+
+--●起動縦横--------------------------------------------------------
+if	(obj.track1<0)then
+	asp_w	=1
+	asp_h	=1-obj.track1/scrasp
+elseif	(obj.track1>0)then
+	asp_w	=1+obj.track1/10
+	asp_h	=1
+else
+	asp_w	=1
+	asp_h	=1
+end
+--●逆回転フラグ----------------------------------------------------
+if	(reverse==0)then
+	rv	=-1
+else
+	rv	=1
+end
+--●楕円・８の字切替------------------------------------------------
+if	(obj.check0)then
+	mv	=2
+else
+	mv	=1
+end
+
+--●ここから描画関連------------------------------------------------
+if(tmpb==1)then
+obj.setoption("drawtarget","tempbuffer",(rds/asp_h)*2+sz,(rds/asp_w)*2+sz)
+end
+
+ox	=math.cos(posi*math.pi/180)*(rds/asp_h)
+oy	=math.sin((posi*math.pi/180)*mv)*(rds/asp_w)*rv
+
+--▼非表示設定関連--------------------------------------------------
+if(ptn==1)then		--上部非表示-------------------------
+	if(oy<=-rds/asp_h+disp)then
+	alpha	=0 else alpha=1 end
+elseif(ptn==2)then	--下部非表示-------------------------
+	if(oy>=rds/asp_h-disp)then
+	alpha	=0 else alpha=1 end
+elseif(ptn==3)then	--左側非表示-------------------------
+	if(ox<=-rds/asp_w+disp)then
+	alpha	=0 else alpha=1 end
+elseif(ptn==4)then	--右側非表示-------------------------
+	if(ox>=rds/asp_w-disp)then
+	alpha	=0 else alpha=1 end
+elseif(ptn==5)then	--上下中心部分表示-------------------
+	if(-rds/asp_h+disp<=oy and oy<=rds/asp_h-disp)then
+	alpha	=0 else alpha=1 end
+elseif(ptn==6)then	--上下中心部分非表示-----------------
+	if(-rds/asp_h+disp<=oy and oy<=rds/asp_h-disp)then
+	alpha	=1 else alpha=0 end
+elseif(ptn==7)then	--左右中心部分表示-------------------
+	if(-rds/asp_w+disp<=ox and ox<=rds/asp_w-disp)then
+	alpha	=0 else alpha=1 end
+elseif(ptn==8)then	--左右中心部分非表示-----------------
+	if(-rds/asp_w+disp<=ox and ox<=rds/asp_w-disp)then
+	alpha	=1 else alpha=0 end
+else
+	alpha=1
+end
+
+
+--▼Tempbufferへ出力するかどうか----------------------------------
+
+if(tmpb==1)then
+	obj.draw(ox,oy,0,sz/100,alpha,0,0,rz)
+	obj.load("tempbuffer")
+else
+
+	obj.alpha	=1--alpha
+	obj.zoom	=sz/100
+	obj.rz		=def_rz-rz
+	obj.ox		=ox
+	obj.oy		=oy
+end
+
+@放物モーション
+--track0:高さ,-200,200,50,1
+--track1:到達時間,0,120,100,0.1
+--track2:初期角度,-360,360,0,0.1
+--track3:最終角度,-360,360,0,0.1
+--check0:横の放物線,0
+--dialog:回転速度倍率,local r_speed=0;座標,parapos={};
+
+obj.effect()
+local x1,y1,t,rv,r1,r2,x_leng,y_leng,rmv,hi,rz,x,y,bzm,move
+move	=obj.track1/100
+r1	=obj.track2
+r2	=obj.track3
+------アンカー---------------------
+bzm	=obj.getvalue("zoom")/100
+obj.setanchor("parapos",1,"line")
+if(parapos[1]==nil)then
+	parapos[1],parapos[2]=0,0
+end
+x1	=parapos[1]*bzm
+y1	=parapos[2]*bzm
+
+------変数--------------------------
+----指定時間で動きを止める----
+if(obj.frame>obj.totalframe*move)then
+	t	=1
+else
+	t	=obj.frame/(obj.totalframe*move)
+end
+----反転～無くてもイイかも（汗）--
+if(obj.track0<0)then
+	rv	=-1
+else
+	rv	=1
+end
+
+
+x_leng	=x1*t
+y_leng	=y1*t
+rmv	=((r2-r1)+(360*r_speed))*t*rv
+
+------ここから動き関係-------------
+if(obj.check0)then	--横の放物線
+	hi	=obj.screen_w*(obj.track0/100)
+	x	=(1-(y_leng-y1/2)^2/(y1/2)^2)*hi+x_leng
+	y	=-y_leng
+	rz	=r1+rmv+(2*(y_leng-y1/2))/360
+	
+else			--縦の放物線
+	hi	=obj.screen_h*(obj.track0/100)
+	y	=(1-(x_leng-x1/2)^2/(x1/2)^2)*hi-y_leng
+	x	=x_leng
+	rz	=r1+rmv+(2*(x_leng-x1/2))/360
+end			--縦横判定終わり
+
+obj.draw(x,-y,0,1,1,0,0,rz)
+
+@軸回転放物移動
+--track0:個数,1,100,5,1
+--track1:高さ,-1000,1000,100,1
+--track2:移動[%],0,120,100,0.1
+--track3:図形回転,-360,360,0,0.1
+--check0:横の放物線,0
+--dialog:初期軸回転位置,local xround=0;回転速度倍率,local r_speed=0;座標,parapos={};Z変化係数,local zsz=2;
+
+obj.effect()
+------変数--------------------------------------------------------
+local	x1,y1,t,x_leng,y_leng,hi,x,y,rz,bzm
+local	move,num,rnd,add,xx,yy
+hi	=obj.track1
+move	=obj.track2/100
+rz	=obj.track3
+num	=obj.track0
+rnd	=(90-xround)+360*obj.time/obj.totaltime*r_speed
+bzm	=obj.getvalue("zoom")/100
+
+if(num>2)then		----------------------------------
+	add=100/num	--なんとなくこの処理を入れた方が--
+else			--キレイな気がするのです。	--
+	add=0		--無くても問題なし。		--
+end			----------------------------------
+
+------アンカー---------------------------------------------------
+obj.setanchor("parapos",1,"line")
+if(parapos[1]==nil)then
+	parapos[1],parapos[2]=0,0
+end
+
+x1	=parapos[1]*bzm
+y1	=parapos[2]*bzm
+
+----指定時間で動きを止める---------------------------------------
+if(obj.frame>obj.totalframe*move)then
+	t	=1
+else
+	t	=obj.frame/(obj.totalframe*move)
+end
+
+x_leng	=x1*t
+y_leng	=y1*t
+
+--▼forループココカラ--------------------------------------------
+for ii=1 , num do
+rr=(360/num)*ii+rnd+add
+
+--▼縦横判定------------------------------------------
+if(obj.check0)then	--横の放物線------------------
+	xx	=(1-(y_leng-y1/2)^2/(y1/2)^2)*hi
+	ox	=math.sin(rr*math.pi/180)*xx+x_leng
+	oy	=-y_leng
+	oz	=math.cos(rr*math.pi/180)*xx*zsz
+else			--縦の放物線------------------
+	ox	=x_leng
+	yy	=(1-(x_leng-x1/2)^2/(x1/2)^2)*hi
+	oy	=math.sin(rr*math.pi/180)*yy-y_leng
+	oz	=math.cos(rr*math.pi/180)*yy*zsz
+end
+--▲縦横判定------------------------------------------
+
+obj.draw(ox,-oy,oz,1,1,0,0,rz)
+end
+--▲forループココマデ--------------------------------------------
+
+@倍速回転
+--track0:Z軸回転,-50,50,0,0.1
+--track1:Y軸回転,-50,50,0,0.1
+--track2:X軸回転,-50,50,0,0.1
+
+local xr = 360*obj.time*obj.track2
+local yr = 360*obj.time*obj.track1
+local zr = 360*obj.time*obj.track0
+obj.rx = obj.rx + xr
+obj.ry = obj.ry + yr
+obj.rz = obj.rz + zr
+
+@螺旋回転
+--track0:半径,0,200,100,1
+--track1:回転量％,-400,400,100,1
+--track2:到達速度,1,400,100,1
+--track3:個数,1,1000,1,1
+--check0:外から内へ,1
+--dialog:個別回転速度[%],local r_speed=100;初期透明度[%],local b_al=0;最終透明度[%],local a_al=0;初期サイズ[%],local b_sz=100;最終サイズ[%],local a_sz=100;回転を継続/chk,local stop=1;回転を揃える/chk,local r_set=0;
+
+obj.effect()
+local life,rad,almv,szmv,n,r_rate,rate,rate_f,scr,scr_f,round,round_f,rr,compare,x,y,zm,alpha
+---共通変数
+life=obj.totalframe          --オブジェクト消えるまでのフレーム数
+rad=obj.screen_h/2*obj.track0/100     --回転半径、画面サイズに比例する
+almv=(1-b_al/100)-(1-a_al/100)
+szmv=a_sz/100-b_sz/100
+n=obj.track3
+r_rate=r_speed/100
+
+if(obj.check0)then
+	rate=1-obj.frame/life*(obj.track2/100)
+	rate_f=1-(obj.track2/100)
+else
+	rate=obj.frame/life*(obj.track2/100)
+	rate_f=(obj.track2/100)
+end
+
+rate=math.max(0,rate)               --rateがマイナスにならないようにする
+rate_f=math.max(0,rate_f)
+scr=rad*rate             --フレームあたりの変化量
+scr_f=rad*rate_f
+
+-----forループ開始
+for i=0, n-1 do
+	round = 360*(obj.track1/100)*(obj.frame/obj.framerate)-(360/n)*i--回転量
+	round_f = 360*(obj.track1/100)*(life/obj.framerate)
+
+	if(r_set==1)then
+		rr=i*(360/n)
+	else
+		rr=1
+	end
+-----ここから動きの処理
+	----表示時間をオーバーしても動き続けないようにする
+	if obj.track2 > 100 then
+	     compare = life/(obj.track2/100)
+	else
+	     compare = life
+	end
+	
+	----表示時間を過ぎたら動きを止める処理
+	if (obj.frame > compare) then
+	     x = obj.ox + math.sin(round_f*math.pi/180)*scr_f
+	     y = obj.oy - math.cos(round_f*math.pi/180)*scr_f
+	
+	     ----回転を継続フラグ----
+	     if(stop==0) then
+	          rz = obj.rz + round_f*r_rate
+	     else
+	          rz = obj.rz + round*r_rate
+	     end
+	     ------------------------
+	     zm = b_sz/100+(1-rate_f)*szmv
+	     alpha = (1-b_al/100)-(1-rate_f)*almv
+	else
+	     x = obj.ox + math.sin(round*math.pi/180)*scr
+	     y = obj.oy - math.cos(round*math.pi/180)*scr
+	     rz = obj.rz + round*r_rate
+	     zm = b_sz/100+(1-rate)*szmv
+	     alpha = (1-b_al/100)-(1-rate)*almv
+	end
+	
+	obj.draw(x,y,0,zm,alpha,0,0,rz+r_rate*rr)
+
+end	--forのend
+
+
+@平行移動
+--track0:範囲[X],-1000,1000,100,1
+--track1:範囲[Y],-1000,1000,50,1
+--track2:表示時間,0,100,0.5,0.1
+--track3:表示間隔,0.01,100,0.2,0.01
+--check0:収束させる,1
+--dialog:移動距離,local dist=100;角度変更[0-360],local o_angle=0;サイズ変更[%],local size=0;縦横比変更[%],local f_as=0;次第に消滅/chk,local clear=0;次第に表示/chk,local appear=0;ランダム角度/chk,local random=0;ランダム範囲[0-360],local range=360;始点調整[0～1],local adj=0.5;乱数の種,local seed=9;
+
+obj.effect()
+local	mvX,mvY,life,gap,d_zoom,i,rz,angle,hh,ww,disp,ox,oy,alpha
+mvY	=obj.track0
+mvX	=obj.track1
+life	=obj.track2
+gap	=obj.track3
+d_zoom	=obj.getvalue("zoom")/100
+
+if(obj.check0)then
+	num	=(obj.totaltime-life)/gap
+else
+	num	=(obj.totaltime)/gap
+end
+--■ここから描画関係----------------------------------------------
+for i = 0,num do
+if(random==1)then
+  rz	=obj.rand(0,range,seed+i,1)
+  angle	=rz+o_angle
+else
+  rz	=obj.getvalue("rz")
+  angle	=o_angle
+end
+  hh	=obj.rand(-mvX,mvX,seed+i,1)
+  ww	=obj.rand(-mvY,mvY,seed+i+100,1)
+  disp	=(life-obj.time+i*gap)/life
+  --■特定の時間だけ表示------------------------------------------
+	if	(0<=disp and disp<1)then
+		chgZm		=d_zoom+(-size/100)*(disp)
+		obj.aspect	=f_as/100*(1-disp)
+
+		--■次第に消滅/登場処理---------------------------
+		if	(clear==0 and appear==1)then
+			alpha	=1-(disp)
+		elseif	(clear==1 and appear==0)then
+			alpha	=disp
+		else
+			alpha	=1
+		end
+		--------------------------------------------------
+		oy	=hh+math.cos((90-rz)*math.pi/180)*(disp-adj)*dist
+		ox	=ww+math.sin((90-rz)*math.pi/180)*(disp-adj)*dist
+	else
+		chgZm	=1
+		alpha	=0
+		oy	=hh
+		ox	=ww
+	end
+  ----------------------------------------------------------------
+  obj.draw(ox,oy,0,chgZm,alpha,0,0,angle)
+end
+
+--[[更新履歴
+12/11/09　全体的に修正。パラメータをXYにし、始点調整を追加。Seed基準値も変更
+]]
+
+
+@移動して整列
+--track0:個数,2,500,10,1
+--track1:移動距離,-1000,1000,100,0.1
+--track2:移動角度,-360,360,45,0.1
+--track3:画像回転,-360,360,0,0,0.1
+--check0:基準点を表示,0
+--dialog:座標,p_pos={};開始ウェイト秒,local wait=0;移動時間比[%],ToM=80;消滅時間,local add=0;一点から拡散/chk,local spread=0;初期位置を表示/chk,start=0;Xをランダム化/chk,local randX=0;Yをランダム化/chk,local randY=0;
+
+obj.effect()
+
+--■変数-------------------------------------------
+local	num,l,r,rz,gx,gy,stx,sty,st_disp,alpha
+local	fl1,fl2,almv,disp,mv,life,time,move
+local	rdx,rdy,fx,fy,sx,sy,moveX,moveY,ox,oy
+
+zm	=obj.getvalue("zoom")/100
+num	=obj.track0
+l	=obj.track1
+r	=90-obj.track2
+rz	=90-obj.track3
+mv	=ToM/100
+
+  --●「初期位置を表示」処理-----------------------
+	if(start==1)then
+		st_disp	=1
+	else
+		st_disp	=0
+	end
+
+  --●「一点から拡散」処理-------------------------
+	if(spread==1)then
+		anc,fl1,fl2=2,0,1
+	else
+		anc,fl1,fl2=1,1,0
+	end
+
+  --●「消滅時間」フラグ処理-----------------------
+	if(add==0)then
+		almv,disp=1,0
+	elseif(add<1)then
+		almv,disp=add,1
+	else
+		almv,disp=add,1
+	end
+
+--●アンカー処理-----------------------------------
+obj.setanchor("p_pos",anc)
+	gx	=(p_pos[1]*zm)/(num-1)
+	gy	=(p_pos[2]*zm)/(num-1)
+
+if(p_pos[3]==nil and p_pos[4]==nil)then
+	stx	=0
+	sty	=0
+else
+	stx	=p_pos[3]*zm
+	sty	=p_pos[4]*zm
+end
+
+---------------------------------------------------
+
+life	=(obj.totaltime*mv-wait)/num
+
+---------------------------------------------------
+for i=0,num-1 do	--▼forループココカラ------
+
+time	=(obj.time-wait)-life*i
+
+  --■移動・透明度---------------------------------
+  if(0<time and time<=life)then	----移動中----
+	move	=time/life
+	alpha	=1-((time/life)/almv)*disp
+
+  elseif(life<time)then		----移動後----
+	move	=1
+	alpha	=1-((time/life)/almv)*disp
+
+  else				----移動前----
+	alpha	=st_disp
+	move	=0
+  end
+
+  alpha	=math.min(1,math.max(0,alpha))
+
+--■ランダム化処理---------------------------------
+rdm	=obj.rand(-r,r,i+r,1)
+
+if(randX==1 and randY==1)then
+	rdx	=math.cos(rdm*math.pi/180)*l
+	rdy	=-math.sin(rdm*math.pi/180)*l
+elseif(randX==1 and randY==0)then
+	rdx	=math.cos(rdm*math.pi/180)*l
+	rdy	=-l
+elseif(randX==0 and randY==1)then
+	rdx	=l
+	rdy	=-math.sin(rdm*math.pi/180)*l
+else
+	rdx	=math.cos(r*math.pi/180)*l
+	rdy	=-math.sin(r*math.pi/180)*l
+end
+
+--■描画関連---------------------------------------
+fx	=gx*i			--到達位置X
+fy	=gy*i			--到達位置Y
+sx	=(fx+rdx)*fl1+(stx*fl2)	--初期位置X
+sy	=(fy+rdy)*fl1+(sty*fl2)	--初期位置Y
+moveX	=(sx-fx)		--X移動量
+moveY	=(sy-fy)		--Y移動量
+ox	=sx-moveX*move		--X座標
+oy	=sy-moveY*move		--Y座標
+
+obj.draw(ox,oy,0,1,alpha,0,0,rz)
+
+end		--▲forループココマデ--------------
+
+--●「基準点を表示」処理------------------------------
+if(obj.check0)then
+	obj.load("figure","円",0xff0000,10/zm)
+	obj.draw(0,0)
+	obj.draw(p_pos[1]*zm,p_pos[2]*zm)
+	obj.load("figure","円",0x00ffff,10/zm)
+	obj.draw(rdx*fl1+(stx*fl2),rdy*fl1+(sty*fl2))
+	obj.draw(sx,sy)
+else end
+
+--[[●更新履歴●
+12/10/05	公開
+12/10/24	始点を表示を基準点表示に変更
+		名前を「移動して整列」に変更
+
+]]
+
+
+@ランダム上昇
+--track0:高さ,-1000,1000,200,0.1
+--track1:回転半径,-500,500,100,1
+--track2:発生量,1,5000,10,1
+--track3:表示時間,0.1,10,0.5,0.1
+--check0:回転を加える,0
+--dialog:表示ﾀｲﾌﾟ(1-8),pattern=0;非表示範囲,x_disp=0;最終透明度[%],local fal=0;最終拡大率[%],local fsz=0;移動加速係数,local mvac=3;変化加速係数,local chac=5;回転時速度[%],local spd=30;
+obj.effect()
+
+--■変数---------------------------------------------------
+local	hig,rad,gap,life,tt,onm,rdm,rr,acc,ox,oy,oz
+local	al1,al2,sz
+hig	=-obj.track0
+rad	=obj.track1
+gap	=1/obj.track2
+life	=obj.track3
+tt	=obj.time/obj.totaltime
+onm	=obj.totaltime/gap
+--■ループ-------------------------------------------------
+for i=0 ,onm-1 do 
+	rdm	=obj.rand(1,360,i,1)
+	tt	=(obj.time-gap*i)/life
+	if(obj.check0)then
+		rr	=rdm*i+360*tt*(spd/100)
+	else
+		rr	=math.fmod(rdm,360)
+	end
+
+	if(0<=tt and tt<=1)then
+		acc	=obj.rand(1,mvac,i,1)
+		ox	=math.sin(rr*math.pi/180)*rad
+		oz	=math.cos(rr*math.pi/180)*rad
+		oy	=hig*tt^acc
+		al1	=1-(fal/100)*tt^chac
+		sz	=1-(1-fsz/100)*tt^chac
+	else
+		ox,oy,oz,al1,sz=0,0,0,0,0	--時間外は止めておく
+	end
+-----表示パターン------
+if(pattern==1)then
+	if(oz>0 or ox<-x_disp or ox>=x_disp)then
+		al2=1
+	else
+		al2=0
+	end
+elseif(pattern==2)then
+	if(oz<=0 or ox<-x_disp or ox>=x_disp)then
+		al2=1
+	else
+		al2=0
+	end
+elseif(pattern==3)then
+	if(ox<x_disp)then
+		al2=1
+	else
+		al2=0
+	end
+elseif(pattern==4)then
+	if(ox>x_disp)then
+		al2=1
+	else
+		al2=0
+	end
+elseif(pattern==5)then
+	if(ox>x_disp and oz>0)then
+		al2=1
+	else
+		al2=0
+	end
+elseif(pattern==6)then
+	if(ox>x_disp and oz<0)then
+		al2=1
+	else
+		al2=0
+	end
+elseif(pattern==7)then
+	if(ox<x_disp and oz>0)then
+		al2=1
+	else
+		al2=0
+	end
+elseif(pattern==8)then
+	if(ox<x_disp and oz<0)then
+		al2=1
+	else
+		al2=0
+	end
+else
+	if(ox<-x_disp or ox>=x_disp)then
+		al2=1
+	else
+		al2=0
+	end
+end
+---------------------------
+alpha	=al1*al2
+
+obj.draw(ox,oy,oz,sz,alpha)
+
+end	--ループの終わり

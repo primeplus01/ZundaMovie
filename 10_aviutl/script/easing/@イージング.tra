@@ -1,0 +1,64 @@
+@イージング（通常）
+--param:1
+
+local E = require("easing_aviutl")
+local index,ratio = math.modf(obj.getpoint("index"))
+local st,ed = obj.getpoint(index),obj.getpoint(index+1)
+local r = E.easing(obj.getpoint("param"),ratio,st,ed-st,1)
+
+return r
+
+@イージング（補間移動）
+--param:1
+--speed:0,0
+
+local E = require("easing_aviutl")
+local total = obj.getpoint("time",obj.getpoint("num")-1)
+local r = E.easing(obj.getpoint("param"),obj.getpoint("time"),0,obj.getpoint("num")-1,total)
+index,ratio = math.modf(r)
+num = obj.getpoint("num")
+--イージンググラフの枠を飛び出す系の対策
+if(index<0)then
+  ratio=ratio+index
+  index=0
+end
+if(index>num-2)then
+  ratio=ratio+(index-(num-2))
+  index=num-2
+end
+debug_print(string.format("index:%d ratio:%f r:%f time:%f total:%f",index,ratio,r,obj.getpoint("time"),total))
+
+local x0,y0,z0,x1,y1,z1,x2,y2,z2,x3,y3,z3
+if( index > 0 or obj.getpoint("accelerate") ) then
+	x0,y0,z0 = obj.getpoint(index-1,0,3)
+else
+	x0,y0,z0 = obj.getpoint(0,0,3)
+	x1,y1,z1 = obj.getpoint(1,0,3)
+	x2,y2,z2 = obj.getpoint(2,0,3)
+	x0 = x0+(x0-x1*2+x2)/2
+	y0 = y0+(y0-y1*2+y2)/2
+	z0 = z0+(z0-z1*2+y2)/2
+end
+if( index < num-2 or obj.getpoint("decelerate") ) then
+	x3,y3,z3 = obj.getpoint(index+2,0,3)
+else
+	x3,y3,z3 = obj.getpoint(num-1,0,3)
+	x2,y2,z2 = obj.getpoint(num-2,0,3)
+	x1,y1,z1 = obj.getpoint(num-3,0,3)
+	x3 = x3+(x3-x2*2+x1)/2
+	y3 = y3+(y3-y2*2+y1)/2
+	z3 = z3+(z3-z2*2+y1)/2
+end
+x1,y1,z1 = obj.getpoint(index  ,0,3)
+x2,y2,z2 = obj.getpoint(index+1,0,3)
+
+i,n = obj.getpoint("link")
+if( n < 3 ) then
+	z0,z1,z2 = 0,0,0;
+	if( n < 2 ) then
+		y0,y1,y2 = 0,0,0;
+	end
+end
+
+x0,y0,z0 = obj.interpolation(ratio,x0,y0,z0,x1,y1,z1,x2,y2,z2,x3,y3,z3)
+return x0;

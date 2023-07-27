@@ -1,0 +1,342 @@
+@拡大伸縮(音声同期)
+--track0:閾値,0,5000,1200,1
+--track1:音域,1,50,1,1
+--track2:拡大率,100,800,200
+--track3:減衰率,0,100,4
+--dialog:Xスケール[%],xs=100;Yスケール[%],ys=100;分割数,div=5;補助線表示/chk,hojo=1;補助線高さ[%],hh=100;
+obj.effect()
+siki=obj.track0
+i=math.min(obj.track1,div)
+s=obj.track2
+sd=obj.track3/100
+buf={}
+n=obj.getaudio(buf,"audiobuffer","spectrum",div)
+if(buf[i]>siki) then
+  zoom=s/100
+  xscale=xs/100
+  yscale=ys/100
+end
+if(zoom>1) then
+  zoom=zoom-sd
+end
+if(xscale>1) then
+  xscale=xscale-sd
+end
+if(yscale>1) then
+  yscale=yscale-sd
+end
+x=obj.w/2*zoom*xscale
+y=obj.h/2*zoom*yscale
+obj.drawpoly(-x,-y,0,x,-y,0,x,y,0,-x,y,0)
+
+if(hojo==1) then
+  h=obj.screen_h/2
+  w=obj.screen_w/n
+  --波形表示(縦棒)
+  obj.load("figure","四角形",0x00ff00,2)
+  obj.alpha=0.5
+  for j=1,n do
+    x=j*w-obj.screen_w/2-w/2
+    y=-buf[j]/10*hh/100+obj.screen_h/2
+    obj.drawpoly(x-w/2,y,0,x+w/2,y,0,x+w/2,h,0,x-w/2,h,0)
+  end
+
+  --選択した音域表示(縦棒)
+  obj.load("figure","四角形",0xff0000,2)
+  x=i*w-obj.screen_w/2-w/2
+  y=-buf[i]/10*hh/100+obj.screen_h/2
+  obj.drawpoly(x-w/2,y,0,x+w/2,y,0,x+w/2,h,0,x-w/2,h,0)
+
+  --閾値表示(横線)
+  obj.load("figure","四角形",0xffffff,2)
+  sw=obj.screen_w/2
+  sy=-siki/10*hh/100+obj.screen_h/2
+  obj.drawpoly(-sw,sy-1,0,sw,sy-1,0,sw,sy+1,0,-sw,sy+1,0)
+
+  --テキスト表示
+  obj.setfont("MS UI Gothic",34,3,0xffffff,0x000000)
+  obj.load("text","音域[" .. i .."]の音量=" .. string.format("%04d",buf[i]))
+  obj.draw(-obj.screen_w/2+obj.w/2,-obj.screen_h/2+obj.h/2)
+end
+
+@方向ブラー(音声同期)
+--track0:閾値,0,5000,1200,1
+--track1:音域,1,50,1,1
+--track2:範囲,0,200,10
+--track3:角度,-360,360,90
+--dialog:分割数,div=5;色ずれ幅[%],iro=0;色ずれ種類[0-2],iro_ty=0;補助線表示/chk,hojo=1;補助線高さ[%],hh=100;
+obj.effect()
+siki=obj.track0
+i=math.min(obj.track1,div)
+s=obj.track2
+r=obj.track3
+buf={}
+n=obj.getaudio(buf,"audiobuffer","spectrum",div)
+if(buf[i]>siki) then
+  l=s*buf[i]/1000
+else
+  l=0
+end
+obj.effect("色ずれ","ずれ幅",l*iro/100,"角度",r,"type",iro_ty)
+obj.effect("方向ブラー","範囲",l,"角度",r)
+obj.draw()
+
+if(hojo==1) then
+  h=obj.screen_h/2
+  w=obj.screen_w/n
+  --波形表示(縦棒)
+  obj.load("figure","四角形",0x00ff00,2)
+  obj.alpha=0.5
+  for j=1,n do
+    x=j*w-obj.screen_w/2-w/2
+    y=-buf[j]/10*hh/100+obj.screen_h/2
+    obj.drawpoly(x-w/2,y,0,x+w/2,y,0,x+w/2,h,0,x-w/2,h,0)
+  end
+
+  --選択した音域表示(縦棒)
+  obj.load("figure","四角形",0xff0000,2)
+  x=i*w-obj.screen_w/2-w/2
+  y=-buf[i]/10*hh/100+obj.screen_h/2
+  obj.drawpoly(x-w/2,y,0,x+w/2,y,0,x+w/2,h,0,x-w/2,h,0)
+
+  --閾値表示(横線)
+  obj.load("figure","四角形",0xffffff,2)
+  sw=obj.screen_w/2
+  sy=-siki/10*hh/100+obj.screen_h/2
+  obj.drawpoly(-sw,sy-1,0,sw,sy-1,0,sw,sy+1,0,-sw,sy+1,0)
+
+  --テキスト表示
+  obj.setfont("MS UI Gothic",34,3,0xffffff,0x000000)
+  obj.load("text","音域[" .. i .."]の音量=" .. string.format("%04d",buf[i]))
+  obj.draw(-obj.screen_w/2+obj.w/2,-obj.screen_h/2+obj.h/2)
+end
+
+@音声波形Plus(改)
+--track0:横分割,1,1024,50,1
+--track1:縦分割,1,1024,50,1
+--track2:音量,0,800,100
+--track3:種類,0,3,0,1
+--dialog:横スペース(%),wsp=25;縦スペース(%),hsp=25;
+wdiv=obj.track0
+hdiv=obj.track1
+zoom=obj.getvalue("zoom")/100
+W=obj.w/zoom
+H=obj.h/zoom
+w=W/wdiv
+h=H/hdiv
+wsp0=w*wsp/100/2
+hsp0=h*hsp/100/2
+vol=obj.track2/100
+mode=obj.track3
+obj.setoption("drawtarget","tempbuffer",W,H)
+obj.setoption("blend","alpha_add")
+
+if(mode<2) then
+  buf={}
+  n=obj.getaudio(buf,"audiobuffer","spectrum",wdiv)
+  for i=0,wdiv-1 do
+    l=buf[i+1]/10*vol
+    l=math.min(l,H)
+    x0=-W/2+w*i     +wsp0
+    x1=-W/2+w*(i+1) -wsp0
+    u0=w*i          +wsp0
+    u1=w*(i+1)      -wsp0
+    for j=0,hdiv-1 do
+      y0=-H/2+h*j     +hsp0
+      y2=-H/2+h*(j+1) -hsp0
+      v0=h*j          +hsp0
+      v2=h*(j+1)      -hsp0
+      if(mode==0) then
+        if(l>=h*(hdiv-j)) then  alp=1  else  alp=0  end
+      elseif(mode==1) then
+        if(l>=h*(j+1)) then  alp=1  else  alp=0  end
+      end
+      obj.drawpoly(x0,y0,0,x1,y0,0,x1,y2,0,x0,y2,0, u0,v0,u1,v0,u1,v2,u0,v2 ,alp)
+    end
+  end
+else
+  buf={}
+  n=obj.getaudio(buf,"audiobuffer","spectrum",hdiv)
+  for j=0,hdiv-1 do
+    l=buf[j+1]/10*vol
+    l=math.min(l,W)
+    y0=-H/2+h*j     +hsp0
+    y2=-H/2+h*(j+1) -hsp0
+    v0=h*j          +hsp0
+    v2=h*(j+1)      -hsp0
+    for i=0,wdiv-1 do
+      x0=-W/2+w*i     +wsp0
+      x1=-W/2+w*(i+1) -wsp0
+      u0=w*i          +wsp0
+      u1=w*(i+1)      -wsp0
+      if(mode==2) then
+        if(l>=w*(wdiv-i)) then  alp=1  else  alp=0  end
+      elseif(mode==3) then
+        if(l>=w*(i+1)) then  alp=1  else  alp=0  end
+      end
+      obj.drawpoly(x0,y0,0,x1,y0,0,x1,y2,0,x0,y2,0, u0,v0,u1,v0,u1,v2,u0,v2 ,alp)
+    end
+  end
+end
+
+obj.load("tempbuffer")
+
+@音声波形Plus3
+--track0:横幅,0,2000,640
+--track1:縦幅%,0,800,100
+--track2:ライン幅,0,500,10,1
+--track3:分割数,1,1024,50,1
+--color:0xffffff
+W=obj.track0
+H=obj.track1/100
+l=obj.track2
+div=obj.track3+1
+buf={}
+n=obj.getaudio(buf,"audiobuffer","pcm",div)
+w=W/(n-1)
+
+obj.load("figure","四角形",color,2)
+obj.setoption("dst","tmp",W,W)
+obj.setoption("blend","alpha_add")
+for i=1,n-1 do
+  x0=(i-1)*w-W/2
+  x1=i*w-W/2
+  y0=-buf[i]  /100*H -l/2
+  y1=-buf[i+1]/100*H -l/2
+  y2=-buf[i+1]/100*H +l/2
+  y3=-buf[i]  /100*H +l/2
+  obj.drawpoly(x0,y0,0,x1,y1,0,x1,y2,0,x0,y3,0)
+end
+obj.load("tempbuffer")
+
+@音声波形Plus4
+--track0:分割数,2,1024,51,1
+--track1:ライン幅,1,100,3
+--track2:横幅,1,2000,640
+--track3:閾値,1,2000,500,1
+--dialog:高さ[%],H=150;色/col,color=0x00ff00;尖鋭化/chk,kaku=1;閾値を減算/chk,sist=1;
+n=obj.track0
+l=obj.track1/2
+W=obj.track2
+siki=obj.track3*10
+w=W/(n-1)
+bun=math.floor(1024/n)
+buf={}
+obj.getaudio(buf,"audiobuffer","pcm",1024)
+obj.setoption("dst","tmp",W,W)
+
+--ラインの描画
+obj.setoption("blend","alpha_mix")
+obj.load("figure","四角形",color,1)
+y0=0
+y1=0
+for i=1,n-1 do
+  x0=(i-1)*w-W/2
+  x1=i*w-W/2
+  if(math.abs(buf[bun*(i+1)])>siki) then
+    if(buf[bun*(i+1)]>0) then
+      y1=-(buf[bun*(i+1)]-siki*sist)/200*H/100
+    else
+      y1=-(buf[bun*(i+1)]+siki*sist)/200*H/100
+    end
+  end
+  if(kaku==1) then
+    if(i%2==1) then
+      y0=0
+    else
+      y1=0
+    end
+  end
+  r=math.atan2(y0-y1,x1-x0)
+  dx = math.sin(r)*l
+  dy = math.cos(r)*l
+  obj.drawpoly(x0-dx,y0-dy,0,x1-dx,y1-dy,0,x1+dx,y1+dy,0,x0+dx,y0+dy,0)
+  y0=y1
+end
+
+--頂点の描画
+obj.load("figure","円",color,l*8)
+for i=1,n-1 do
+  x0 = (i-1)*w-W/2
+  y0=0
+  if(math.abs(buf[bun*i])>siki) then
+    if(buf[bun*i]>0) then
+      y0=-(buf[bun*i]-siki*sist)/200*H/100
+    else
+      y0=-(buf[bun*i]+siki*sist)/200*H/100
+    end
+  end
+  if(kaku==1 and i%2==1) then
+    y0=0
+  end
+  obj.drawpoly(x0-l,y0-l,0,x0+l,y0-l,0,x0+l,y0+l,0,x0-l,y0+l,0)
+end
+
+obj.load("tempbuffer")
+
+@立体音声波形Plus
+--track0:拡大率,0,800,100
+--track1:高さ,0,800,100
+--track2:分割数,1,1024,50,1
+--track3:奥行き,0,800,50
+obj.effect()
+div=obj.track2
+hh=obj.track1/100
+s=obj.track0/100
+z=obj.track3/2
+buf={}
+n=obj.getaudio(buf,"audiobuffer","spectrum",div)
+w=obj.w/n
+for i=1,n do
+  l=buf[i]/10*hh
+  l=math.min(l,obj.h)
+  x0=((i-1)*w-obj.w/2)*s
+  y0=(-l+obj.h/2)*s
+  x1=(i*w-obj.w/2)*s
+  y2=obj.h/2*s
+  u0=(i-1)*w
+  v0=-l+obj.h
+  u1=i*w
+  v2=obj.h
+  obj.drawpoly(x0,y0,-z,x1,y0,-z,x1,y2,-z,x0,y2,-z, u0,v0,u1,v0,u1,v2,u0,v2)  --前
+  obj.drawpoly(x0,y0, z,x1,y0, z,x1,y2, z,x0,y2, z, u0,v0,u1,v0,u1,v2,u0,v2)  --後
+  obj.drawpoly(x0,y0,-z,x0,y0, z,x0,y2, z,x0,y2,-z, u0,v0,u0,v0,u0,v2,u0,v2)  --左
+  obj.drawpoly(x1,y0,-z,x1,y0, z,x1,y2, z,x1,y2,-z, u1,v0,u1,v0,u1,v2,u1,v2)  --右
+  obj.drawpoly(x0,y0,-z,x1,y0,-z,x1,y0, z,x0,y0, z, u0,v0,u1,v0,u1,v0,u0,v0)  --上
+  obj.drawpoly(x0,y2,-z,x1,y2,-z,x1,y2, z,x0,y2, z, u0,v2,u1,v2,u1,v2,u0,v2)  --下
+end
+
+@音声波形Plus2-ロール
+--track0:半径,0,1000,100
+--track1:高さ,0,800,100
+--track2:横分割,1,1024,15,1
+--track3:縦分割,1,100,25,1
+--dialog:縦隙間(%),ch=2;横隙間,cw=2;
+obj.effect()
+hh=obj.track1/100
+div=obj.track2
+m=obj.track3
+buf={}
+n=obj.getaudio(buf,"audiobuffer","spectrum",div)
+w=obj.w/n
+h=obj.h/m
+r=obj.w/math.pi/2*obj.track0/100
+for i=1,n do
+  l=buf[i]/10*hh
+  l=math.min(l,obj.h)
+  x0=r*math.sin(math.pi*2*i    /n+ch/100)
+  x1=r*math.sin(math.pi*2*(i+1)/n-ch/100)
+  z0=-r*math.cos(math.pi*2*i    /n+ch/100)
+  z1=-r*math.cos(math.pi*2*(i+1)/n-ch/100)
+  u0,u1=(i-1)*w+cw ,i*w-cw
+  for j=0,m-1 do
+    y0,y2=-obj.h/2+h*j+ch ,-obj.h/2+h*(j+1)-ch
+    v0,v2=h*j+ch ,h*(j+1)-ch
+    if(l>=h*(m-j)) then
+      alpha=1
+    else
+      alpha=0
+    end
+    obj.drawpoly(x0,y0,z0,x1+1,y0,z1,x1+1,y2,z1,x0,y2,z0, u0,v0,u1+1,v0,u1+1,v2,u0,v2,alpha)
+  end
+end 

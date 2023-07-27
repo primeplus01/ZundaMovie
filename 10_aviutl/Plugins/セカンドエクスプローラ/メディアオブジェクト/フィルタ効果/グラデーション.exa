@@ -1,0 +1,15 @@
+[vo]
+length=501
+[vo.0]
+_name=グラデーション
+強さ=100.0
+中心X=0
+中心Y=0
+角度=0.0
+幅=100
+blend=0
+color=ffffff
+no_color=0
+color2=000000
+no_color2=0
+type=0
